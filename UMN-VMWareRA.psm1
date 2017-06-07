@@ -18,16 +18,25 @@
 function Connect-VMWareRASession {
 <#
     .Synopsis
-        Get IPv4 from vmware if VM is running with integration tools installed
+        Connect to VMWare Rest API Session
+    
     .DESCRIPTION
-        Long description
+        Connect to VMWare Rest API Session
+    
     .PARAMETER vCenter
-
+        FQDN of server to connect to        
+    
     .PARAMETER vmwareCreds
+        PS credential of user that has access
+    
     .EXAMPLE
-        a
-    .EXAMPLE
-    A   nother example of how to use this cmdlet
+        $sessionID = Connect-VMWareRASession  -vCenter $vCenter -vmwareCreds $vmwareApiCred
+
+    .OUTPUTS
+        Function will return the a Session ID that will be used as an Auth token in other functions in this module
+
+    .Notes
+        Author: Travis Sobeck
 #>
     [CmdletBinding()]
     Param
@@ -64,16 +73,22 @@ function Connect-VMWareRASession {
 function Disconnect-VMWareRASession {
 <#
     .Synopsis
-        Get IPv4 from vmware if VM is running with integration tools installed
-    .DESCRIPTION
-        Long description
-    .PARAMETER vCenter
+       Disconnect VMWare Rest API Session
 
-    .PARAMETER vmwareCreds
+    .DESCRIPTION
+        Disconnect VMWare Rest API Session
+
+    .PARAMETER vCenter
+        FQDN of server to connect to to end session
+
+    .PARAMETER sessionID
+        vmware-api-session-id to be closed
+    
     .EXAMPLE
-        a
-    .EXAMPLE
-    A   nother example of how to use this cmdlet
+        Disconnect-VMWareRASession -vCenter $vCenter -sessionID $sessionID
+        
+    .Notes
+        Author: Travis Sobeck
 #>
     [CmdletBinding()]
     Param
@@ -96,6 +111,398 @@ function Disconnect-VMWareRASession {
             -Headers @{'vmware-api-session-id'=$sessionID;'Accept' = 'application/json'} `
             -ContentType 'application/json'
         if($return.StatusCode -ne 200){throw "Failed to logout"}
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAVM
+function Get-VMWareRAOpen {
+<#
+    .Synopsis
+        This is an open function to get anything from https://$vCenter/apiexplorer/#/ that supports a Get method
+    
+    .DESCRIPTION
+        This is an open function to get anything from https://$vCenter/apiexplorer/#/ that supports a Get method
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+    
+    .PARAMETER api
+        specific api section to select from Currently cis, appliance, content, api, vcenter
+
+    .PARAMETER section
+        section to get information about
+
+    .PARAMETER specific
+        many of the section allow you to narrow down to a specific item in a section by some kind of ID, you do need to review the docs to find out what ID .. or jsut guess until you get it right
+
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$api,
+
+        [Parameter(Mandatory)]
+        [string]$section,
+
+        [string]$specific
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/$api/$section"
+        if ($specific){$url += "/$specific"}
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        return(($return.Content | ConvertFrom-Json).value)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAVM
+function Get-VMWareRAVM {
+<#
+    .Synopsis
+        Get details about vm from VMWare Rest API
+    
+    .DESCRIPTION
+        Get details about vm from VMWare Rest API
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+    
+    .PARAMETER compter
+        name of vm
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$computer
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
+        $url = "https://$vCenter/rest/vcenter/vm/$vmID"
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        return(($return.Content | ConvertFrom-Json).value)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAVMID
+function Get-VMWareRAVMID {
+<#
+    .Synopsis
+        Get vm ID for a specific vm from VMWare Rest API
+    
+    .DESCRIPTION
+        Get vm ID for a specific vm from VMWare Rest API
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+    
+    .PARAMETER vmID
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        vmware ID, needed for other functions in this module
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$computer
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/vcenter/vm?filter.names=$computer"
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        return(($return.Content | ConvertFrom-Json).value.vm)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region New-VMWareRAVM
+function New-VMWareRAVM {
+<#
+    .Synopsis
+        Build new VM via VMWare Rest API
+    
+    .DESCRIPTION
+        Build new VM via VMWare Rest API
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$computer,
+
+        [int]$memoryGB = 4,
+
+        [int]$NumCpu = 2,
+
+        [int]$corePerSocket = 1,
+        
+        #[string]$notes,
+
+        [Parameter(Mandatory)]
+        [int]$diskSizeGB,
+
+        [int]$secondDiskSizeGB,
+
+        [Parameter(Mandatory)]
+        [string]$network,
+
+        #[string[]]$tags,
+
+        [string]$isoPath,
+
+        [Parameter(Mandatory)]
+        [string]$folder,
+
+        [Parameter(Mandatory)]
+        [string]$datastore
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Validate that the vm to be built doesn't already exists.  This is a littel awkward.  If the vm exists, throw an error.  If it doesn't Get-VM actual throws an error, so catch it but move on because that's the desired result
+        <#try {
+            $tempVM = Get-VM -Name $computer
+            Throw "Vm with name $computer already exists $_.Exception.Message"
+        }
+        catch {} #In this case we want a fail.#>
+
+        ## Construct url
+        $url = "https://$vCenter/rest/vcenter/vm"
+        # construct hash table for JSON
+        $spec = @{'placement' = @{'cluster'= $cluster;'folder'= $folder;'datastore'= $datastore};
+          'name'= $computer;
+          'boot'= @{'type'= 'CDROM'};#'efi_legacy_boot'= $true;'delay'= 0;
+          'hardware_version'= 'VMX_11';
+          'guest_OS'= 'WINDOWS_9_SERVER_64';          
+          "nics"= @(@{"backing"= @{"type"= "DISTRIBUTED_PORTGROUP";"network"= $network};"allow_guest_control"= $true;"mac_type"= "GENERATED";"start_connected"= $true;"type"= "VMXNET3"});
+          "memory"= @{"hot_add_enabled"= $true;"size_MiB"= (1024 * $memoryGB)};
+          "cpu"= @{"count"= $NumCpu;"hot_add_enabled"= $true;"hot_remove_enabled"= $true;"cores_per_socket"= $corePerSocket};          
+        } # close 'spec'
+        if ($isoPath){$spec["cdroms"]= [array]@(@{"backing"= @{"iso_file"= $isoPath;"type"= "ISO_FILE"};"start_connected"= $true;"allow_guest_control"= $true;"type"= "SATA"});}
+        $spec["disks"] = [System.Collections.ArrayList]@(@{"new_vmdk"= @{"capacity"= ([math]::pow( 1024, 3 ) * $diskSizeGB);"name"= "disk1"};"type"= "SCSI"})
+        if ($secondDiskSizeGB){$null = $spec["disks"].add(@{"new_vmdk"= @{"capacity"= ([math]::pow( 1024, 3 ) * $secondDiskSizeGB);"name"= "disk2"};"type"= "SCSI"})}
+
+        # construct json
+        $json = @{'spec' = $spec} | ConvertTo-Json -Depth 5
+        return (((Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID;'Accept' = 'application/json'} -ContentType 'application/json' -Body $json).Content | convertfrom-json).value)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Remove-VMWareRAVM
+function Remove-VMWareRAVM {
+<#
+    .Synopsis
+        Remove vm from VMWare Rest API
+    
+    .DESCRIPTION
+        Remove vm from VMWare Rest API
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+    
+    .PARAMETER computer
+        name of vm
+
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        Returns $true if vm is remove.  Throws error if not
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$computer
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
+        $url = "https://$vCenter/rest/vcenter/vm/$vmID"
+        $return = Invoke-WebRequest -Uri $url -Method Delete -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        if ($return.StatusCode -eq 200){return($true)}
+        else{Throw "Failed to remove $computer $return"}
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Test-VMWareRASession
+function Test-VMWareRASession {
+<#
+    .Synopsis
+        Test for valid and active VMWare Rest API Session
+    
+    .DESCRIPTION
+        Test for valide and active VMWare Rest API Session
+    
+    .PARAMETER vCenter
+        FQDN of server to test connection against
+
+    .PARAMETER sessionID
+        vmware-api-session-id to be tested
+    
+    .EXAMPLE
+        Test-VMWareRASession -vCenter $vCenter -sessionID $sessionID
+        
+    .OUTPUTS
+        If there is a valid and active connection, the funciton will return details about the connection.  If not, the function will return $false
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [ValidateNotNullOrEmpty()]
+        [string]$vCenter,
+        
+        [ValidateNotNullOrEmpty()]
+        [string]$sessionID
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/com/vmware/cis/session?~action=get"
+        try{
+            return ((Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID;'Accept' = 'application/json'} -Body $null -ContentType 'application/json').content | convertfrom-json).value
+        }
+        catch{return $false}
     }
     End
     {
