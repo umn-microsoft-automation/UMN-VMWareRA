@@ -118,7 +118,7 @@ function Disconnect-VMWareRASession {
 }
 #endregion
 
-#region Get-VMWareRAVM
+#region Get-VMWareRAVOpen
 function Get-VMWareRAOpen {
 <#
     .Synopsis
@@ -176,7 +176,8 @@ function Get-VMWareRAOpen {
     Process
     {
         ## Construct url
-        $url = "https://$vCenter/rest/$api/$section"
+        if ($api -eq 'cis' -or $api -eq 'content' -or $api -eq 'vapi'){$url = "https://$vCenter/rest/com/vmware/$api/$section"} # some adds /com/vmware
+        else{$url = "https://$vCenter/rest/$api/$section"}
         if ($specific){$url += "/$specific"}
         $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
         return(($return.Content | ConvertFrom-Json).value)
@@ -348,6 +349,178 @@ function Get-VMWareRAVMpower {
         $url = "https://$vCenter/rest/vcenter/vm/$vmID/power"
         $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
         return(($return.Content | ConvertFrom-Json).value.state)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAVTag
+function Get-VMWareRATag {
+<#
+    .Synopsis
+        Get-vmware Tag via Rest API
+    
+    .DESCRIPTION
+        Get-vmware Tag via Rest API
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER tagID
+
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$tagID
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag/id:$tagID"
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        return(($return.Content | ConvertFrom-Json).value)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAVMTagsAttachedToObject
+function Get-VMWareRAVMTagsAttachedToObject {
+<#
+    .Synopsis
+        Get list of objects a tag is attached to an object
+    
+    .DESCRIPTION
+        Get list of objects a tag is attached to an object
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+    
+    .PARAMETER type
+        type of object, for example 'virtualMachine'
+
+    .PARAMETER id
+        id of object, for example if its a vm, use Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer to get its id
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        JSON data of ids/types
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$id,
+
+        [Parameter(Mandatory)]
+        [string]$type
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag-association?~action=list-attached-tags"
+        $json = @{"object_id" = @{"type"=$type;"id"=$id}} | ConvertTo-Json -Depth 3
+        $return = Invoke-WebRequest -Uri $url -Method Post -Body $json -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        ($return.Content | ConvertFrom-Json).value | ForEach-Object {Get-VMWareRATag -vCenter $vCenter -sessionID $sessionID -tagID $_}
+        #return(($return.Content | ConvertFrom-Json).value)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAVMTagAttachList
+function Get-VMWareRAVMTagAttachList {
+<#
+    .Synopsis
+        Get list of objects a tag is attached to
+    
+    .DESCRIPTION
+        Get list of objects a tag is attached to
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+    
+    .PARAMETER tagID
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        JSON data of ids/types
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$tagID
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag-association/id:$tagID`?~action=list-attached-objects"
+        $return = Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        return(($return.Content | ConvertFrom-Json).value)
     }
     End
     {
