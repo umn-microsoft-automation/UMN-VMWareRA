@@ -368,6 +368,60 @@ function Get-VMWareRATag {
     .PARAMETER vCenter
         FQDN of server to connect to
 
+    .PARAMETER name
+
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [string]$name
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## There isn't 
+        $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag"
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $tags = ($return.Content | ConvertFrom-Json).value
+        if ($name){$tags | ForEach-Object {if (((Get-VMWareRATagByID -vCenter $vCenter -sessionID $sessionID -tagID $_).Name) -eq $name){return (Get-VMWareRATagByID -vCenter $vCenter -sessionID $sessionID -tagID $_);break}}}
+        else{$tags | ForEach-Object {return (Get-VMWareRATagByID -vCenter $vCenter -sessionID $sessionID -tagID $_)}}
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAVTagByID
+function Get-VMWareRATagByID {
+<#
+    .Synopsis
+        Get-vmware Tag by ID via Rest API
+    
+    .DESCRIPTION
+        Get-vmware Tag by ID via Rest API
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
     .PARAMETER tagID
 
     
@@ -464,7 +518,7 @@ function Get-VMWareRAVMTagsAttachedToObject {
         $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag-association?~action=list-attached-tags"
         $json = @{"object_id" = @{"type"=$type;"id"=$id}} | ConvertTo-Json -Depth 3
         $return = Invoke-WebRequest -Uri $url -Method Post -Body $json -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
-        ($return.Content | ConvertFrom-Json).value | ForEach-Object {Get-VMWareRATag -vCenter $vCenter -sessionID $sessionID -tagID $_}
+        ($return.Content | ConvertFrom-Json).value | ForEach-Object {Get-VMWareRATagByID -vCenter $vCenter -sessionID $sessionID -tagID $_}
         #return(($return.Content | ConvertFrom-Json).value)
     }
     End
@@ -735,6 +789,75 @@ function Set-VMWareRAVMpower {
         $url = "https://$vCenter/rest/vcenter/vm/$vmID/power/$state"
         $return = Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
         return($return.StatusDescription)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Set-VMWareRAVMTagAttachedToObject
+function Set-VMWareRAVMTagAttachedToObject {
+<#
+    .Synopsis
+        Add tags to an object
+    
+    .DESCRIPTION
+        Add tags to an object
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+
+    .PARAMETER tagID
+        ID of tag to be added
+    
+    .PARAMETER type
+        type of object, for example 'virtualMachine'
+
+    .PARAMETER id
+        id of object, for example if its a vm, use Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer to get its id
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        JSON data of ids/types
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$tagid,
+        
+        [Parameter(Mandatory)]
+        [string]$id,
+
+        [Parameter(Mandatory)]
+        [string]$type
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag-association/id:$tagId`?~action=attach"
+        $json = @{"object_id" = @{"type"=$type;"id"=$id}} | ConvertTo-Json -Depth 3
+        $return = Invoke-WebRequest -Uri $url -Method Post -Body $json -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        if ($return.StatusCode -eq 200){return $true}
     }
     End
     {
