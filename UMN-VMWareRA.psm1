@@ -192,10 +192,10 @@ function Get-VMWareRAOpen {
 function Get-VMWareRAVM {
 <#
     .Synopsis
-        Get details about vm from VMWare Rest API
+        Get details about vm by name or ID or a list of all VMs from VMWare Rest API
     
     .DESCRIPTION
-        Get details about vm from VMWare Rest API
+        Get details about vm or a list of vms from VMWare Rest API
     
     .PARAMETER vCenter
         FQDN of server to connect to
@@ -204,8 +204,11 @@ function Get-VMWareRAVM {
         vmware-api-session-id from Connect-vmwwarerasession
     
     .PARAMETER compter
-        name of vm
-    
+        name of vm, or leave this and vmID blank to get a full list
+
+    .PARAMETER vmID
+        ID of vm, or leave this and vmID blank to get a full list
+
     .EXAMPLE
         
         
@@ -224,8 +227,9 @@ function Get-VMWareRAVM {
         [Parameter(Mandatory)]
         [string]$sessionID,
 
-        [Parameter(Mandatory)]
-        [string]$computer
+        [string]$computer,
+
+        [string]$vmID
     )
 
     Begin
@@ -234,7 +238,10 @@ function Get-VMWareRAVM {
     Process
     {
         ## Construct url
-        $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
+        if($computer)
+        {
+            if(-not(($vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer))){throw "Unable to find $computer"}
+        }
         $url = "https://$vCenter/rest/vcenter/vm/$vmID"
         $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
         return(($return.Content | ConvertFrom-Json).value)
@@ -634,7 +641,7 @@ function New-VMWareRAVM {
         [Parameter(Mandatory)]
         [string]$network,
 
-        #[string[]]$tags,
+        #[string[]]$tags, # api has not supported this yet
 
         [string]$isoPath,
 
@@ -642,7 +649,16 @@ function New-VMWareRAVM {
         [string]$folder,
 
         [Parameter(Mandatory)]
-        [string]$datastore
+        [string]$cluster,
+
+        [Parameter(Mandatory)]
+        [string]$datastore,
+
+        [string]$bootSource = 'CDROM',
+
+        [string]$hardwareVersion = 'VMX_11',
+
+        [string]$guestOS = 'WINDOWS_9_SERVER_64'
     )
 
     Begin
@@ -658,9 +674,9 @@ function New-VMWareRAVM {
         # construct hash table for JSON
         $spec = @{'placement' = @{'cluster'= $cluster;'folder'= $folder;'datastore'= $datastore};
           'name'= $computer;
-          'boot'= @{'type'= 'CDROM'};#'efi_legacy_boot'= $true;'delay'= 0;
-          'hardware_version'= 'VMX_11';
-          'guest_OS'= 'WINDOWS_9_SERVER_64';          
+          'boot'= @{'type'= $bootSource};#'efi_legacy_boot'= $true;'delay'= 0;
+          'hardware_version'= $hardwareVersion;
+          'guest_OS'= $guestOS;          
           "nics"= @(@{"backing"= @{"type"= "DISTRIBUTED_PORTGROUP";"network"= $network};"allow_guest_control"= $true;"mac_type"= "GENERATED";"start_connected"= $true;"type"= "VMXNET3"});
           "memory"= @{"hot_add_enabled"= $true;"size_MiB"= (1024 * $memoryGB)};
           "cpu"= @{"count"= $NumCpu;"hot_add_enabled"= $true;"hot_remove_enabled"= $true;"cores_per_socket"= $corePerSocket};          
