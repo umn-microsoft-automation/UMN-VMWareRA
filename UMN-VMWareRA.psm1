@@ -633,7 +633,7 @@ function New-VMWareRAVM {
         [Parameter(Mandatory)]
         [string]$network,
 
-        #[string[]]$tags,
+        #[string[]]$tags, # api has not supported this yet
 
         [string]$isoPath,
 
@@ -644,7 +644,13 @@ function New-VMWareRAVM {
         [string]$cluster,
 
         [Parameter(Mandatory)]
-        [string]$datastore
+        [string]$datastore,
+
+        [string]$bootSource = 'CDROM',
+
+        [string]$hardwareVersion = 'VMX_11',
+
+        [string]$guestOS = 'WINDOWS_9_SERVER_64'
     )
 
     Begin
@@ -660,9 +666,9 @@ function New-VMWareRAVM {
         # construct hash table for JSON
         $spec = @{'placement' = @{'cluster'= $cluster;'folder'= $folder;'datastore'= $datastore};
           'name'= $computer;
-          'boot'= @{'type'= 'CDROM'};#'efi_legacy_boot'= $true;'delay'= 0;
-          'hardware_version'= 'VMX_11';
-          'guest_OS'= 'WINDOWS_9_SERVER_64';          
+          'boot'= @{'type'= $bootSource};#'efi_legacy_boot'= $true;'delay'= 0;
+          'hardware_version'= $hardwareVersion;
+          'guest_OS'= $guestOS;          
           "nics"= @(@{"backing"= @{"type"= "DISTRIBUTED_PORTGROUP";"network"= $network};"allow_guest_control"= $true;"mac_type"= "GENERATED";"start_connected"= $true;"type"= "VMXNET3"});
           "memory"= @{"hot_add_enabled"= $true;"size_MiB"= (1024 * $memoryGB)};
           "cpu"= @{"count"= $NumCpu;"hot_add_enabled"= $true;"hot_remove_enabled"= $true;"cores_per_socket"= $corePerSocket};          
