@@ -192,7 +192,7 @@ function Get-VMWareRAOpen {
 function Get-VMWareRAVM {
 <#
     .Synopsis
-        Get details about vm or a list of vms from VMWare Rest API
+        Get details about vm by name or ID or a list of all VMs from VMWare Rest API
     
     .DESCRIPTION
         Get details about vm or a list of vms from VMWare Rest API
@@ -204,8 +204,11 @@ function Get-VMWareRAVM {
         vmware-api-session-id from Connect-vmwwarerasession
     
     .PARAMETER compter
-        name of vm, or leave blank to get a full list
-    
+        name of vm, or leave this and vmID blank to get a full list
+
+    .PARAMETER vmID
+        ID of vm, or leave this and vmID blank to get a full list
+
     .EXAMPLE
         
         
@@ -224,7 +227,9 @@ function Get-VMWareRAVM {
         [Parameter(Mandatory)]
         [string]$sessionID,
 
-        [string]$computer
+        [string]$computer,
+
+        [string]$vmID
     )
 
     Begin
@@ -233,7 +238,10 @@ function Get-VMWareRAVM {
     Process
     {
         ## Construct url
-        if($computer){$vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer}
+        if($computer)
+        {
+            if(-not(($vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer))){throw "Unable to find $computer"}
+        }
         $url = "https://$vCenter/rest/vcenter/vm/$vmID"
         $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
         return(($return.Content | ConvertFrom-Json).value)
