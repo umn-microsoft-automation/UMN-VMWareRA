@@ -298,8 +298,10 @@ function Get-VMWareRAVMID {
     {
         ## Construct url
         $url = "https://$vCenter/rest/vcenter/vm?filter.names=$computer"
-        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
-        return(($return.Content | ConvertFrom-Json).value.vm)
+        $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json').Content | ConvertFrom-Json).value.vm
+        if($return.count -gt 1){Throw "Retuned more than one result $return"}
+        if($return -eq $null){Throw "$computer NOT found."}
+        return $return
     }
     End
     {
@@ -740,12 +742,22 @@ function Remove-VMWareRAVM {
     }
     Process
     {
-        ## Construct url
-        $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
-        $url = "https://$vCenter/rest/vcenter/vm/$vmID"
-        $return = Invoke-WebRequest -Uri $url -Method Delete -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
-        if ($return.StatusCode -eq 200){return($true)}
-        else{Throw "Failed to remove $computer $return"}
+        try{
+            ## Check current powerstate, if on, power off.  This also checks for existence.
+            if((Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer).power_state -eq 'POWERED_ON')
+            {
+                Write-Warning "$computer is currently powered on, attempting to poweroff"
+                $null = Set-VMWareRAVMpower -vCenter $vCenter -sessionID $sessionID -computer $computer -state stop
+                Start-Sleep -Seconds 3
+            }
+            ## Construct url
+            $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
+            $url = "https://$vCenter/rest/vcenter/vm/$vmID"
+            $return = Invoke-WebRequest -Uri $url -Method Delete -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+            if ($return.StatusCode -eq 200){return($true)}
+            else{Throw "Failed to remove $computer $return"}
+        }
+        catch{throw $Error}
     }
     End
     {
