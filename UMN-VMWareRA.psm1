@@ -398,7 +398,78 @@ function Get-VMWareRATag {
         [Parameter(Mandatory)]
         [string]$sessionID,
 
-        [string]$name
+        [string]$name,
+
+        [string]$category
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## 
+        [System.Collections.ArrayList]$tagList = @() 
+        $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag"
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $tags = ($return.Content | ConvertFrom-Json).value
+        if ($name)
+        {
+            $tags | ForEach-Object {
+                $tag = Get-VMWareRATagByID -vCenter $vCenter -sessionID $sessionID -tagID $_
+                if ($tag.name -eq $name){$null = $tagList.Add($tag)}
+            }
+            if ($tagList.Count -eq 0){throw "unable to find tag named $name"}
+            elseif ($category)
+            {
+                $catID = (Get-VMWareRATagCategory -vCenter $vCenter -sessionID $sessionID -category $category).ID
+                $tagList | Where-Object {$_.category_id -eq $catID}
+            }
+            elseif($tagList.Count -eq 1){return $tagList}
+            else{throw "Multiple tags $name found, specify a category"}
+        }
+        else{$tags | ForEach-Object {return (Get-VMWareRATagByID -vCenter $vCenter -sessionID $sessionID -tagID $_)}}
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAVTagCategory
+function Get-VMWareRATagCategory {
+<#
+    .Synopsis
+        Get-vmware Tag Category via Rest API
+    
+    .DESCRIPTION
+        Get-vmware Tag Category via Rest API
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER name
+
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [string]$category
     )
 
     Begin
@@ -407,11 +478,12 @@ function Get-VMWareRATag {
     Process
     {
         ## There isn't 
-        $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag"
+        $url = "https://$vCenter/rest/com/vmware/cis/tagging/category"
         $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
-        $tags = ($return.Content | ConvertFrom-Json).value
-        if ($name){$tags | ForEach-Object {if (((Get-VMWareRATagByID -vCenter $vCenter -sessionID $sessionID -tagID $_).Name) -eq $name){return (Get-VMWareRATagByID -vCenter $vCenter -sessionID $sessionID -tagID $_);break}}}
-        else{$tags | ForEach-Object {return (Get-VMWareRATagByID -vCenter $vCenter -sessionID $sessionID -tagID $_)}}
+        $categorys = ($return.Content | ConvertFrom-Json).value
+        $categorys
+        if ($category){$categorys | ForEach-Object {if (((Get-VMWareRATagCategoryByID -vCenter $vCenter -sessionID $sessionID -categoryID $_).Name) -eq $category){return (Get-VMWareRATagCategoryByID -vCenter $vCenter -sessionID $sessionID -categoryID $_);break}}}
+        else{$categorys | ForEach-Object {return (Get-VMWareRATagCategoryByID -vCenter $vCenter -sessionID $sessionID -categoryID $_)}}
     }
     End
     {
@@ -472,6 +544,59 @@ function Get-VMWareRATagByID {
 }
 #endregion
 
+#region Get-VMWareRAVTagCategoryByID
+function Get-VMWareRATagCategoryByID {
+<#
+    .Synopsis
+        Get-vmware Tag Category by ID via Rest API
+    
+    .DESCRIPTION
+        Get-vmware Tag Category by ID via Rest API
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER tagID
+
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$categoryID
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/com/vmware/cis/tagging/category/id:$categoryID"
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        return(($return.Content | ConvertFrom-Json).value)
+    }
+    End
+    {
+    }
+}
+#endregion
+
 #region Get-VMWareRAVMTagsAttachedToObject
 function Get-VMWareRAVMTagsAttachedToObject {
 <#
@@ -514,7 +639,7 @@ function Get-VMWareRAVMTagsAttachedToObject {
         [Parameter(Mandatory)]
         [string]$id,
 
-        [Parameter(Mandatory)]
+        #[ValidateSet('VirtualMachine',IgnoreCase = $false)]
         [string]$type
     )
 
@@ -872,7 +997,7 @@ function Set-VMWareRAVMTagAttachedToObject {
         [Parameter(Mandatory)]
         [string]$id,
 
-        [Parameter(Mandatory)]
+        #[ValidateSet('VirtualMachine',IgnoreCase = $false)]
         [string]$type
     )
 
