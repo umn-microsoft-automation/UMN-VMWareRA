@@ -300,7 +300,6 @@ function Get-VMWareRAVMID {
         $url = "https://$vCenter/rest/vcenter/vm?filter.names=$computer"
         $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json').Content | ConvertFrom-Json).value.vm
         if($return.count -gt 1){Throw "Retuned more than one result $return"}
-        if($return -eq $null){Throw "$computer NOT found."}
         return $return
     }
     End
