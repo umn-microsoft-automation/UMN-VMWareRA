@@ -59,7 +59,7 @@ function Connect-VMWareRASession {
         $url = "https://$vCenter/rest/com/vmware/cis/session"
         $return = Invoke-WebRequest -Uri $url -Method Post `
             -Headers @{'vmware-use-header-authn' = 'asdfypaf';'vmware-api-session-id'='null';'Accept' = 'application/json';'Authorization' = "Basic $auth"} `
-            -ContentType 'application/json'
+            -ContentType 'application/json' -UseBasicParsing
         if($return.StatusCode -ne 200){throw "Failed to login $return"}
         return ($return.Content | convertfrom-json).value
     }
@@ -109,8 +109,65 @@ function Disconnect-VMWareRASession {
         $url = "https://$vCenter/rest/com/vmware/cis/session"
         $return = Invoke-WebRequest -Uri $url -Method Delete  `
             -Headers @{'vmware-api-session-id'=$sessionID;'Accept' = 'application/json'} `
-            -ContentType 'application/json'
+            -ContentType 'application/json' -UseBasicParsing
         if($return.StatusCode -ne 200){throw "Failed to logout"}
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRANetworks
+function Get-VMWareRANetworks {
+<#
+    .Synopsis
+        Get a list of Networks
+    
+    .DESCRIPTION
+        Get a list of Networks
+    
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+    
+    .PARAMETER filter
+        Filster string to narrow down list of networks
+    
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        vmware ID, needed for other functions in this module
+
+    .Notes
+        Author: Travis Sobeck
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [string]$filter
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/vcenter/network"
+        $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing).Content | ConvertFrom-Json).value
+        $_.name
+        if ($filter){$return = $return | Where-Object {$_.name -match $filter}}
+        return $return
     }
     End
     {
@@ -179,7 +236,7 @@ function Get-VMWareRAOpen {
         if ($api -eq 'cis' -or $api -eq 'content' -or $api -eq 'vapi'){$url = "https://$vCenter/rest/com/vmware/$api/$section"} # some adds /com/vmware
         else{$url = "https://$vCenter/rest/$api/$section"}
         if ($specific){$url += "/$specific"}
-        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID } -ContentType 'application/json' -UseBasicParsing
         return(($return.Content | ConvertFrom-Json).value)
     }
     End
@@ -243,7 +300,7 @@ function Get-VMWareRAVM {
             if(-not(($vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer))){throw "Unable to find $computer"}
         }
         $url = "https://$vCenter/rest/vcenter/vm/$vmID"
-        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
         return(($return.Content | ConvertFrom-Json).value)
     }
     End
@@ -298,7 +355,7 @@ function Get-VMWareRAVMID {
     {
         ## Construct url
         $url = "https://$vCenter/rest/vcenter/vm?filter.names=$computer"
-        $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json').Content | ConvertFrom-Json).value.vm
+        $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing).Content | ConvertFrom-Json).value.vm
         if($return.count -gt 1){Throw "Retuned more than one result $return"}
         return $return
     }
@@ -355,7 +412,7 @@ function Get-VMWareRAVMpower {
         $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
         ## Construct url
         $url = "https://$vCenter/rest/vcenter/vm/$vmID/power"
-        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
         return(($return.Content | ConvertFrom-Json).value.state)
     }
     End
@@ -410,7 +467,7 @@ function Get-VMWareRATag {
         ## 
         [System.Collections.ArrayList]$tagList = @() 
         $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag"
-        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
         $tags = ($return.Content | ConvertFrom-Json).value
         if ($name)
         {
@@ -478,7 +535,7 @@ function Get-VMWareRATagCategory {
     {
         ## There isn't 
         $url = "https://$vCenter/rest/com/vmware/cis/tagging/category"
-        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
         $categorys = ($return.Content | ConvertFrom-Json).value
         $categorys
         if ($category){$categorys | ForEach-Object {if (((Get-VMWareRATagCategoryByID -vCenter $vCenter -sessionID $sessionID -categoryID $_).Name) -eq $category){return (Get-VMWareRATagCategoryByID -vCenter $vCenter -sessionID $sessionID -categoryID $_);break}}}
@@ -534,7 +591,7 @@ function Get-VMWareRATagByID {
     {
         ## Construct url
         $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag/id:$tagID"
-        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
         return(($return.Content | ConvertFrom-Json).value)
     }
     End
@@ -587,7 +644,7 @@ function Get-VMWareRATagCategoryByID {
     {
         ## Construct url
         $url = "https://$vCenter/rest/com/vmware/cis/tagging/category/id:$categoryID"
-        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
         return(($return.Content | ConvertFrom-Json).value)
     }
     End
@@ -650,7 +707,7 @@ function Get-VMWareRAVMTagsAttachedToObject {
         ## Construct url
         $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag-association?~action=list-attached-tags"
         $json = @{"object_id" = @{"type"=$type;"id"=$id}} | ConvertTo-Json -Depth 3
-        $return = Invoke-WebRequest -Uri $url -Method Post -Body $json -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Post -Body $json -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
         ($return.Content | ConvertFrom-Json).value | ForEach-Object {Get-VMWareRATagByID -vCenter $vCenter -sessionID $sessionID -tagID $_}
         #return(($return.Content | ConvertFrom-Json).value)
     }
@@ -706,7 +763,7 @@ function Get-VMWareRAVMTagAttachList {
     {
         ## Construct url
         $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag-association/id:$tagID`?~action=list-attached-objects"
-        $return = Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
         return(($return.Content | ConvertFrom-Json).value)
     }
     End
@@ -813,7 +870,7 @@ function New-VMWareRAVM {
 
         # construct json
         $json = @{'spec' = $spec} | ConvertTo-Json -Depth 5
-        return (((Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID;'Accept' = 'application/json'} -ContentType 'application/json' -Body $json).Content | convertfrom-json).value)
+        return (((Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID;'Accept' = 'application/json'} -ContentType 'application/json' -Body $json -UseBasicParsing).Content | convertfrom-json).value)
     }
     End
     {
@@ -877,7 +934,7 @@ function Remove-VMWareRAVM {
             ## Construct url
             $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
             $url = "https://$vCenter/rest/vcenter/vm/$vmID"
-            $return = Invoke-WebRequest -Uri $url -Method Delete -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+            $return = Invoke-WebRequest -Uri $url -Method Delete -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
             if ($return.StatusCode -eq 200){return($true)}
             else{Throw "Failed to remove $computer $return"}
         }
@@ -939,7 +996,7 @@ function Set-VMWareRAVMpower {
         $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
         ## Construct url
         $url = "https://$vCenter/rest/vcenter/vm/$vmID/power/$state"
-        $return = Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
         return($return.StatusDescription)
     }
     End
@@ -1008,7 +1065,7 @@ function Set-VMWareRAVMTagAttachedToObject {
         ## Construct url
         $url = "https://$vCenter/rest/com/vmware/cis/tagging/tag-association/id:$tagId`?~action=attach"
         $json = @{"object_id" = @{"type"=$type;"id"=$id}} | ConvertTo-Json -Depth 3
-        $return = Invoke-WebRequest -Uri $url -Method Post -Body $json -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json'
+        $return = Invoke-WebRequest -Uri $url -Method Post -Body $json -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
         if ($return.StatusCode -eq 200){return $true}
     }
     End
@@ -1059,7 +1116,7 @@ function Test-VMWareRASession {
         ## Construct url
         $url = "https://$vCenter/rest/com/vmware/cis/session?~action=get"
         try{
-            return ((Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID;'Accept' = 'application/json'} -ContentType 'application/json').content | convertfrom-json).value
+            return ((Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID;'Accept' = 'application/json'} -ContentType 'application/json' -UseBasicParsing).content | convertfrom-json).value
         }
         catch{return $false}
     }
