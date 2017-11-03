@@ -878,6 +878,75 @@ function New-VMWareRAVM {
 }
 #endregion
 
+#region Remove-VMWareISO
+function Remove-VMWareISO {
+<#
+    .Synopsis
+        Sets CD-ROM backing to Client Device (removes mounted iso)
+    
+    .DESCRIPTION
+        Sets CD-ROM backing to Client Device (removes mounted iso)
+
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+    
+    .PARAMETER computer
+        name of vm
+
+    .EXAMPLE
+        
+        
+    .OUTPUTS
+        Returns $true if CD-ROM backing is updated is remove.  Throws error if not
+
+    .Notes
+        Author: Kyle Weeks
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory)]
+        [string]$computer
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        Try{
+            # Get VM ID, and device id of CD-ROM
+            $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
+            $cdRomID =  (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer).cdroms.key
+        
+            ## Construct url
+            $url = "https://$vCenter/rest/vcenter/vm/$vmID/hardware/cdrom/$cdRomID"
+
+            # Construct body
+            $body = @{spec=@{allow_guest_control='true';backing=@{type="CLIENT_DEVICE"}}} |ConvertTo-Json
+        
+            # Unmount ISO
+            $return = Invoke-WebRequest -Uri $url -Method Patch -Headers @{'vmware-api-session-id'=$sessionID} -Body $body -ContentType 'application/json' -UseBasicParsing
+            return($return.StatusDescription)
+        }
+        
+        catch{throw $Error}
+    }
+    End
+    {
+    }
+}
+#endregion
+
 #region Remove-VMWareRAVM
 function Remove-VMWareRAVM {
 <#
