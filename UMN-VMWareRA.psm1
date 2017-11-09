@@ -180,16 +180,16 @@ function Get-VMWareRAOpen {
 <#
     .Synopsis
         This is an open function to get anything from https://$vCenter/apiexplorer/#/ that supports a Get method
-    
+
     .DESCRIPTION
         This is an open function to get anything from https://$vCenter/apiexplorer/#/ that supports a Get method
-    
+
     .PARAMETER vCenter
         FQDN of server to connect to
 
     .PARAMETER sessionID
         vmware-api-session-id from Connect-vmwwarerasession
-    
+
     .PARAMETER api
         specific api section to select from Currently cis, appliance, content, api, vcenter
 
@@ -199,15 +199,8 @@ function Get-VMWareRAOpen {
     .PARAMETER specific
         many of the section allow you to narrow down to a specific item in a section by some kind of ID, you do need to review the docs to find out what ID .. or jsut guess until you get it right
 
-    
-    .EXAMPLE
-        
-        
-    .OUTPUTS
-        
-
     .Notes
-        Author: Travis Sobeck
+    Author: Travis Sobeck
 #>
     [CmdletBinding()]
     Param
@@ -250,28 +243,24 @@ function Get-VMWareRAVM {
 <#
     .Synopsis
         Get details about vm by name or ID or a list of all VMs from VMWare Rest API
-    
+
     .DESCRIPTION
         Get details about vm or a list of vms from VMWare Rest API
-    
+
     .PARAMETER vCenter
         FQDN of server to connect to
 
     .PARAMETER sessionID
         vmware-api-session-id from Connect-vmwwarerasession
-    
+
     .PARAMETER compter
         name of vm, or leave this and vmID blank to get a full list
 
     .PARAMETER vmID
         ID of vm, or leave this and vmID blank to get a full list
 
-    .EXAMPLE
-        
-        
+    .EXAMPLE   
     .OUTPUTS
-        
-
     .Notes
         Author: Travis Sobeck
 #>
@@ -334,7 +323,7 @@ function Get-VMWareRAVMID {
 
     .Notes
         Author: Travis Sobeck
-#>
+#>    
     [CmdletBinding()]
     Param
     (
@@ -358,6 +347,71 @@ function Get-VMWareRAVMID {
         $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing).Content | ConvertFrom-Json).value.vm
         if($return.count -gt 1){Throw "Retuned more than one result $return"}
         return $return
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAVMMac
+function Get-VMWareRAVMMac {
+    <#
+        .Synopsis
+            Get the Mac address for a vm of a connected NIC
+
+        .DESCRIPTION
+            Get the Mac address for a vm, look at  GET /vcenter/vm/{vm}/hardware/ethernet for a more complete look at nics
+
+        .PARAMETER vCenter
+            FQDN of server to connect to
+
+        .PARAMETER sessionID
+            vmware-api-session-id from Connect-vmwwarerasession
+
+        .PARAMETER compter
+            name of vm, or leave this and vmID blank to get a full list
+
+        .PARAMETER vmID
+            ID of vm, or leave this and vmID blank to get a full list
+
+        .PARAMETER nicLabel
+            label of target nic, useful with multiple nics
+
+        .Notes
+            Author: Travis Sobeck
+    #>
+
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [Parameter(Mandatory,ParameterSetName='vmName')]
+        [string]$computer,
+
+        [Parameter(Mandatory,ParameterSetName='vmID')]
+        [string]$vmID,
+
+        [string]$nicLabel
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        if($computer){$nics = (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer).nics.value}
+        else{$nics = (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -vmID $vmID).nics.value}
+        if ($nicLabel){$nics  $nics | Where-Object {$_.label -eq $nicLabel}}
+        if (($nics | Where-Object{$_.state -eq 'CONNECTED'}).count -gt 1){Throw "Multiple nics specify nic label"}
+        if (-not $nics){Throw "No connected nics"}
+        return $nics.mac_address
     }
     End
     {
