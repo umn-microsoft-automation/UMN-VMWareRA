@@ -408,7 +408,7 @@ function Get-VMWareRAVMMac {
         ## Construct url
         if($computer){$nics = (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer).nics.value}
         else{$nics = (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -vmID $vmID).nics.value}
-        if ($nicLabel){$nics  $nics | Where-Object {$_.label -eq $nicLabel}}
+        if ($nicLabel){$nics = $nics | Where-Object {$_.label -eq $nicLabel}}
         if (($nics | Where-Object{$_.state -eq 'CONNECTED'}).count -gt 1){Throw "Multiple nics specify nic label"}
         if (-not $nics){Throw "No connected nics"}
         return $nics.mac_address
