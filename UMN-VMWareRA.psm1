@@ -1272,7 +1272,16 @@ function Get-VMWareRAHost {
     .PARAMETER name
         name of the host, case sensitivity required
 
-    .EXAMPLE   
+    .PARAMETER hostID
+        ID of the host
+
+    .PARAMETER cluster
+        name of the cluster to obtain host list from, case sensitivity required
+
+    .PARAMETER clusterID
+        ID of the cluster to obtain host list from. Overrides cluster parameter if also specified.
+
+    .OUTPUTS   
         Host objects, which includes the name, ID, connection and power status
 
     .Notes
@@ -1357,7 +1366,8 @@ function Get-VMWareRAVMByName {
         Get VM objects by name from the VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
 
     .DESCRIPTION
-        Get details about vm or a list of vms from VMWare Rest API
+        Get details about vm or a list of vms from VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
+        Able to return more than 1000 objects by working around the current limitation of the REST APIs.
 
     .PARAMETER vCenter
         FQDN of server to connect to
@@ -1366,10 +1376,22 @@ function Get-VMWareRAVMByName {
         vmware-api-session-id from Connect-vmwwarerasession
 
     .PARAMETER name
-        name of the host, case sensitivity required
+        name of the VM, case sensitivity not required. Supports wildcard character *.
 
-    .EXAMPLE   
-        Host objects, which includes the name, ID, connection and power status
+    .PARAMETER host
+        name of host to return list of VMs from, case sensitivity required
+
+    .PARAMETER hostID
+        ID of host to return list of VMs from. Overrides host parameter if also specified.
+
+    .PARAMETER cluster
+        Name of cluster to return list of VMs from (able to return more then 1000 VMs), case sensitivity required.
+
+    .PARAMETER clusterID
+        ID of cluster to return list of VMs from (able to return more then 1000 VMs.) Overrides cluster parameter if specified.
+
+    .OUTPUTS
+        List of VM objects based on parameters specified.
 
     .Notes
         Author: Aaron Smith
