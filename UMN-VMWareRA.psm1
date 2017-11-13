@@ -1242,7 +1242,7 @@ function Get-VMWareRACluster {
 
         if ($name)
         {
-            $url += "?filter.names=${name}";
+            $url += "?filter.names=$name"
         }
 
         $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
@@ -1312,41 +1312,41 @@ function Get-VMWareRAHost {
     {
         if ($cluster)
         {
-            $clusterID = (Get-VMWareRACluster -vCenter $vCenter -sessionID $sessionID -name $cluster).cluster;
+            $clusterID = (Get-VMWareRACluster -vCenter $vCenter -sessionID $sessionID -name $cluster).cluster
 
             if (!$clusterID)
             {
-                throw "Cluster ${cluster} not found by name";
+                throw "Cluster $cluster not found by name"
             }
         }
 
         ## Construct url
         $url = "https://$vCenter/rest/vcenter/host"
 
-        [Array] $urlFilters = @();
+        [System.Collections.ArrayList] $urlFilters = New-Object System.Collections.ArrayList
 
         if ($name)
         {
-            $urlFilters += "filter.names=${name}";
+            [void] $urlFilters.add("filter.names=$name")
         }
 
         if ($hostID)
         {
-            $urlFilters += "filter.hosts=${hostID}";
+            [void] $urlFilters.add("filter.hosts=$hostID")
         }
 
         if ($clusterID)
         {
-            $urlFilters += "filter.clusters=${clusterID}";
+            [void] $urlFilters.add("filter.clusters=$clusterID")
         }
 
         if ($urlFilters.Count -gt 0)
         {
-            $url += "?";
+            $url += "?"
 
             foreach ($urlFilterItem in $urlFilters)
             {
-                $url += $urlFilterItem + "&";
+                $url += $urlFilterItem + "&"
             }
         }
 
@@ -1423,88 +1423,96 @@ function Get-VMWareRAVMByName {
     {
         if ($cluster)
         {
-            $clusterID = (Get-VMWareRACluster -vCenter $vCenter -sessionID $sessionID -name $cluster).cluster;
+            $clusterID = (Get-VMWareRACluster -vCenter $vCenter -sessionID $sessionID -name $cluster).cluster
 
             if (!$clusterID)
             {
-                throw "Cluster ${cluster} not found by name";
+                throw "Cluster $cluster not found by name"
             }
         }
 
         if ($host)
         {
-            $hostID = (Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID -name $host).host;
+            $hostID = (Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID -name $host).host
 
             if (!$hostID)
             {
-                throw "VMHost ${host} not found by name";
+                throw "VMHost $host not found by name"
             }
         }
 
         ## List of VMs compiled from queries for return
-        [Array] $vmList = @();
+        [System.Collections.ArrayList] $vmList = New-Object System.Collections.ArrayList
 
         ## Construct url
         $url = "https://$vCenter/rest/vcenter/vm"
 
-        [Array] $urlFilters = @();
+        [System.Collections.ArrayList] $urlFilters = New-Object System.Collections.ArrayList
 
         if ($hostID)
         {
-            $urlFilters += "filter.hosts=${hostID}";
+            [void] $urlFilters.add("filter.hosts=$hostID")
         }
 
         if ($urlFilters.Count -gt 0)
         {
-            $url += "?";
+            $url += "?"
 
             foreach ($urlFilterItem in $urlFilters)
             {
-                $url += $urlFilterItem + "&";
+                $url += $urlFilterItem + "&"
             }
 
             $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
-            $vmList += (($return.Content | ConvertFrom-Json).value)
+
+            foreach ($returnItem in (($return.Content | ConvertFrom-Json).value))
+            {
+                [void] $vmList.Add($returnItem)
+            }
         }
         else
         {
-            [Array] $hostList = @();
+            [Array] $hostList = $null;
 
             if ($clusterID)
             {
-                $hostList += Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID -clusterID $clusterID;
+                $hostList = Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID -clusterID $clusterID
             }
             else
             {
-                $hostList += Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID;
+                $hostList = Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID
             }
 
             foreach ($hostItem in $hostList)
             {
-                $hostID = $hostItem.host;
-                $url = "https://$vCenter/rest/vcenter/vm?filter.hosts=${hostID}"
+                $hostID = $hostItem.host
+                $url = "https://$vCenter/rest/vcenter/vm?filter.hosts=$hostID"
 
                 $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
-                $vmList += (($return.Content | ConvertFrom-Json).value);
+                
+                foreach ($returnItem in (($return.Content | ConvertFrom-Json).value))
+                {
+                    [void] $vmList.Add($returnItem)
+                }
             }
         }
 
         if ($name)
         {
-            [Array] $filteredVMList = @();
+            [System.Collections.ArrayList] $filteredVMList = New-Object System.Collections.ArrayList
 
-            foreach ( $vmItem in $vmList )
+            foreach ($vmItem in $vmList)
             {
-                if ($vmItem.name -like "*${name}*")
+                if ($vmItem.name -like "*$name*")
                 {
-                    $filteredVMList += $vmItem;
+                    [void] $filteredVMList.add($vmItem)
                 }
             }
 
-            $vmList = $filteredVMList;
+            return $filteredVMList.ToArray();
         }
 
-        return $vmList;
+        return $vmList.ToArray();
     }
     End
     {
