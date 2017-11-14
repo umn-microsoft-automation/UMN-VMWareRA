@@ -1503,7 +1503,7 @@ function Get-VMWareRAVMByName {
 
             foreach ($vmItem in $vmList)
             {
-                if ($vmItem.name -like "*$name*")
+                if ($vmItem.name -like "$name")
                 {
                     [void] $filteredVMList.add($vmItem)
                 }
