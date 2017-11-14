@@ -16,28 +16,28 @@
 
 #region Connect-VMWareRASession
 function Connect-VMWareRASession {
-<#
-    .Synopsis
-        Connect to VMWare Rest API Session
-    
-    .DESCRIPTION
-        Connect to VMWare Rest API Session
-    
-    .PARAMETER vCenter
-        FQDN of server to connect to        
-    
-    .PARAMETER vmwareCreds
-        PS credential of user that has access
-    
-    .EXAMPLE
-        $sessionID = Connect-VMWareRASession  -vCenter $vCenter -vmwareCreds $vmwareApiCred
+    <#
+        .Synopsis
+            Connect to VMWare Rest API Session
+        
+        .DESCRIPTION
+            Connect to VMWare Rest API Session
+        
+        .PARAMETER vCenter
+            FQDN of server to connect to        
+        
+        .PARAMETER vmwareCreds
+            PS credential of user that has access
+        
+        .EXAMPLE
+            $sessionID = Connect-VMWareRASession  -vCenter $vCenter -vmwareCreds $vmwareApiCred
 
-    .OUTPUTS
-        Function will return the a Session ID that will be used as an Auth token in other functions in this module
+        .OUTPUTS
+            Function will return the a Session ID that will be used as an Auth token in other functions in this module
 
-    .Notes
-        Author: Travis Sobeck
-#>
+        .Notes
+            Author: Travis Sobeck
+    #>
     [CmdletBinding()]
     Param
     (
@@ -71,25 +71,25 @@ function Connect-VMWareRASession {
 
 #region Disconnect-VMWareRASession 
 function Disconnect-VMWareRASession {
-<#
-    .Synopsis
-       Disconnect VMWare Rest API Session
-
-    .DESCRIPTION
+    <#
+        .Synopsis
         Disconnect VMWare Rest API Session
 
-    .PARAMETER vCenter
-        FQDN of server to connect to to end session
+        .DESCRIPTION
+            Disconnect VMWare Rest API Session
 
-    .PARAMETER sessionID
-        vmware-api-session-id to be closed
-    
-    .EXAMPLE
-        Disconnect-VMWareRASession -vCenter $vCenter -sessionID $sessionID
+        .PARAMETER vCenter
+            FQDN of server to connect to to end session
+
+        .PARAMETER sessionID
+            vmware-api-session-id to be closed
         
-    .Notes
-        Author: Travis Sobeck
-#>
+        .EXAMPLE
+            Disconnect-VMWareRASession -vCenter $vCenter -sessionID $sessionID
+            
+        .Notes
+            Author: Travis Sobeck
+    #>
     [CmdletBinding()]
     Param
     (
@@ -118,33 +118,193 @@ function Disconnect-VMWareRASession {
 }
 #endregion
 
+#region Get-VMWareRACluster
+function Get-VMWareRACluster {
+    <#
+        .Synopsis
+            Get details about cluster by name or list of all clusters from the VMWare Rest API
+
+        .DESCRIPTION
+            Get details about cluster by name or list of all clusters from the VMWare Rest API
+
+        .PARAMETER vCenter
+            FQDN of server to connect to
+
+        .PARAMETER sessionID
+            vmware-api-session-id from Connect-vmwwarerasession
+
+        .PARAMETER name
+            name of the cluster, case sensitivity required 
+
+        .OUTPUTS
+            Cluster objects, which includes the name, ID, and HA/DRS enablement settings.
+        .Notes
+            Author: Aaron Smith
+    #>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [string]$name
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/vcenter/cluster"
+
+        if ($name)
+        {
+            $url += "?filter.names=$name"
+        }
+
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+        return(($return.Content | ConvertFrom-Json).value)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAHost
+function Get-VMWareRAHost {
+    <#
+        .Synopsis
+            Get details about host by name or list of all hosts from the VMWare Rest API
+
+        .DESCRIPTION
+            Get details about host by name or list of all hosts from the VMWare Rest API
+
+        .PARAMETER vCenter
+            FQDN of server to connect to
+
+        .PARAMETER sessionID
+            vmware-api-session-id from Connect-vmwwarerasession
+
+        .PARAMETER name
+            name of the host, case sensitivity required
+
+        .PARAMETER hostID
+            ID of the host
+
+        .PARAMETER cluster
+            name of the cluster to obtain host list from, case sensitivity required
+
+        .PARAMETER clusterID
+            ID of the cluster to obtain host list from. Overrides cluster parameter if also specified.
+
+        .OUTPUTS   
+            Host objects, which includes the name, ID, connection and power status
+
+        .Notes
+            Author: Aaron Smith
+    #>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [string]$name,
+
+        [string]$hostID,
+
+        [string]$cluster,
+
+        [string]$clusterID
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        if ($cluster)
+        {
+            if (-not ($clusterID = (Get-VMWareRACluster -vCenter $vCenter -sessionID $sessionID -name $cluster).cluster))
+            {
+                throw "Cluster $cluster not found by name"
+            }
+        }
+
+        ## Construct url
+        $url = "https://$vCenter/rest/vcenter/host"
+
+        [System.Collections.ArrayList] $urlFilters = New-Object System.Collections.ArrayList
+
+        if ($name)
+        {
+            [void] $urlFilters.add("filter.names=$name")
+        }
+
+        if ($hostID)
+        {
+            [void] $urlFilters.add("filter.hosts=$hostID")
+        }
+
+        if ($clusterID)
+        {
+            [void] $urlFilters.add("filter.clusters=$clusterID")
+        }
+
+        if ($urlFilters.Count -gt 0)
+        {
+            $url += "?"
+
+            foreach ($urlFilterItem in $urlFilters)
+            {
+                $url += $urlFilterItem + "&"
+            }
+        }
+
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+        return(($return.Content | ConvertFrom-Json).value)
+    }
+    End
+    {
+    }
+}
+#endregion
+
 #region Get-VMWareRANetworks
 function Get-VMWareRANetworks {
-<#
-    .Synopsis
-        Get a list of Networks
-    
-    .DESCRIPTION
-        Get a list of Networks
-    
-    .PARAMETER vCenter
-        FQDN of server to connect to
-
-    .PARAMETER sessionID
-        vmware-api-session-id from Connect-vmwwarerasession
-    
-    .PARAMETER filter
-        Filster string to narrow down list of networks
-    
-    .EXAMPLE
+    <#
+        .Synopsis
+            Get a list of Networks
         
+        .DESCRIPTION
+            Get a list of Networks
         
-    .OUTPUTS
-        vmware ID, needed for other functions in this module
+        .PARAMETER vCenter
+            FQDN of server to connect to
 
-    .Notes
-        Author: Travis Sobeck
-#>
+        .PARAMETER sessionID
+            vmware-api-session-id from Connect-vmwwarerasession
+        
+        .PARAMETER filter
+            Filster string to narrow down list of networks
+        
+        .EXAMPLE
+            
+            
+        .OUTPUTS
+            vmware ID, needed for other functions in this module
+
+        .Notes
+            Author: Travis Sobeck
+    #>
     [CmdletBinding()]
     Param
     (
@@ -177,31 +337,31 @@ function Get-VMWareRANetworks {
 
 #region Get-VMWareRAVOpen
 function Get-VMWareRAOpen {
-<#
-    .Synopsis
-        This is an open function to get anything from https://$vCenter/apiexplorer/#/ that supports a Get method
+    <#
+        .Synopsis
+            This is an open function to get anything from https://$vCenter/apiexplorer/#/ that supports a Get method
 
-    .DESCRIPTION
-        This is an open function to get anything from https://$vCenter/apiexplorer/#/ that supports a Get method
+        .DESCRIPTION
+            This is an open function to get anything from https://$vCenter/apiexplorer/#/ that supports a Get method
 
-    .PARAMETER vCenter
-        FQDN of server to connect to
+        .PARAMETER vCenter
+            FQDN of server to connect to
 
-    .PARAMETER sessionID
-        vmware-api-session-id from Connect-vmwwarerasession
+        .PARAMETER sessionID
+            vmware-api-session-id from Connect-vmwwarerasession
 
-    .PARAMETER api
-        specific api section to select from Currently cis, appliance, content, api, vcenter
+        .PARAMETER api
+            specific api section to select from Currently cis, appliance, content, api, vcenter
 
-    .PARAMETER section
-        section to get information about
+        .PARAMETER section
+            section to get information about
 
-    .PARAMETER specific
-        many of the section allow you to narrow down to a specific item in a section by some kind of ID, you do need to review the docs to find out what ID .. or jsut guess until you get it right
+        .PARAMETER specific
+            many of the section allow you to narrow down to a specific item in a section by some kind of ID, you do need to review the docs to find out what ID .. or jsut guess until you get it right
 
-    .Notes
-    Author: Travis Sobeck
-#>
+        .Notes
+        Author: Travis Sobeck
+    #>
     [CmdletBinding()]
     Param
     (
@@ -240,30 +400,50 @@ function Get-VMWareRAOpen {
 
 #region Get-VMWareRAVM
 function Get-VMWareRAVM {
-<#
-    .Synopsis
-        Get details about vm by name or ID or a list of all VMs from VMWare Rest API
+    <#
+        .Synopsis
+            Get VM objects by name from the VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
 
-    .DESCRIPTION
-        Get details about vm or a list of vms from VMWare Rest API
+        .DESCRIPTION
+            Get details about vm or a list of vms from VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
+            Able to return more than 1000 objects by working around the current limitation of the REST APIs.
 
-    .PARAMETER vCenter
-        FQDN of server to connect to
+        .PARAMETER vCenter
+            FQDN of server to connect to
 
-    .PARAMETER sessionID
-        vmware-api-session-id from Connect-vmwwarerasession
+        .PARAMETER sessionID
+            vmware-api-session-id from Connect-vmwwarerasession
 
-    .PARAMETER compter
-        name of vm, or leave this and vmID blank to get a full list
+        .PARAMETER name
+            name of the VM, case sensitivity not required. Supports wildcard character *.
 
-    .PARAMETER vmID
-        ID of vm, or leave this and vmID blank to get a full list
+        .PARAMETER computer
+            Alias to name
 
-    .EXAMPLE   
-    .OUTPUTS
-    .Notes
-        Author: Travis Sobeck
-#>
+        .PARAMETER vmID
+            ID of vm, or leave this and vmID blank to get a full list
+
+        .PARAMETER host
+            name of host to return list of VMs from, case sensitivity required
+
+        .PARAMETER hostID
+            ID of host to return list of VMs from. Overrides host parameter if also specified.
+
+        .PARAMETER cluster
+            Name of cluster to return list of VMs from (able to return more then 1000 VMs), case sensitivity required.
+
+        .PARAMETER clusterID
+            ID of cluster to return list of VMs from (able to return more then 1000 VMs.) Overrides cluster parameter if specified.
+
+        .PARAMETER detailed
+            Add this switch to output detailed contents of the VM
+
+        .OUTPUTS
+            List of VM objects based on parameters specified.
+
+        .Notes
+            Author: Aaron Smith, Travis Sobeck
+    #>
     [CmdletBinding()]
     Param
     (
@@ -273,9 +453,20 @@ function Get-VMWareRAVM {
         [Parameter(Mandatory)]
         [string]$sessionID,
 
-        [string]$computer,
+        [Alias('computer')]
+        [string]$name,
 
-        [string]$vmID
+        [string]$vmID,
+
+        [string]$hostName,
+
+        [string]$hostID,
+
+        [string]$cluster,
+
+        [string]$clusterID,
+
+        [switch]$detailed
     )
 
     Begin
@@ -283,14 +474,124 @@ function Get-VMWareRAVM {
     }
     Process
     {
-        ## Construct url
-        if($computer)
+        if($name)
         {
-            if(-not(($vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer))){throw "Unable to find $computer"}
+            if(($vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $name))
+            {
+                $url = "https://$vCenter/rest/vcenter/vm/$vmID"
+                $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+                return(($return.Content | ConvertFrom-Json).value)        
+            }
         }
-        $url = "https://$vCenter/rest/vcenter/vm/$vmID"
-        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
-        return(($return.Content | ConvertFrom-Json).value)
+        if($vmID)
+        {
+            $url = "https://$vCenter/rest/vcenter/vm/$vmID"
+            $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+            return(($return.Content | ConvertFrom-Json).value)
+        }
+        Write-Verbose "No exact match, checking for other matches"
+        if ($cluster)
+        {
+            if (-not ($clusterID = (Get-VMWareRACluster -vCenter $vCenter -sessionID $sessionID -name $cluster).cluster))
+            {
+                throw "Cluster $cluster not found by name"
+            }
+        }
+
+        if ($hostName)
+        {
+            if (-not ($hostID = (Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID -name $hostName).host))
+            {
+                throw "VMHost $hostName not found by name"
+            }
+        }
+
+        ## List of VMs compiled from queries for return
+        [System.Collections.ArrayList] $vmList = New-Object System.Collections.ArrayList
+
+        ## Construct url
+        $url = "https://$vCenter/rest/vcenter/vm"
+
+        [System.Collections.ArrayList] $urlFilters = New-Object System.Collections.ArrayList
+
+        if ($hostID)
+        {
+            [void] $urlFilters.add("filter.hosts=$hostID")
+        }
+
+        if ($urlFilters.Count -gt 0)
+        {
+            $url += "?"
+
+            foreach ($urlFilterItem in $urlFilters)
+            {
+                $url += $urlFilterItem + "&"
+            }
+
+            $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+
+            foreach ($returnItem in (($return.Content | ConvertFrom-Json).value))
+            {
+                [void] $vmList.Add($returnItem)
+            }
+        }
+        else
+        {
+            [Array] $hostList = $null
+
+            if ($clusterID)
+            {
+                $hostList = Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID -clusterID $clusterID
+            }
+            else
+            {
+                $hostList = Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID
+            }
+
+            foreach ($hostItem in $hostList)
+            {
+                $hostID = $hostItem.host
+                $url = "https://$vCenter/rest/vcenter/vm?filter.hosts=$hostID"
+
+                $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+                
+                foreach ($returnItem in (($return.Content | ConvertFrom-Json).value))
+                {
+                    [void] $vmList.Add($returnItem)
+                }
+            }
+        }
+
+        [System.Collections.ArrayList] $detailedVMList = New-Object System.Collections.ArrayList
+        if ($name)
+        {
+            foreach ($vmItem in $vmList)
+            {
+                if ($vmItem.name -like "$name")
+                {                    
+                    if ($detailed){
+                        $obj = Get-VMWareRAVM -vCenter $vcenter -sessionID $sessionID -vmID $vmItem.vm
+                        Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $vmItem.vm
+                        [void] $detailedVMList.add($obj)
+                    }
+                    else{[void] $detailedVMList.add($vmItem)}
+                }
+            }
+            return $detailedVMList
+        }
+        else
+        {
+            if ($detailed){
+                foreach ($vmItem in $vmList)
+                {
+                    $obj = Get-VMWareRAVM -vCenter $vcenter -sessionID $sessionID -vmID $vmItem.vm
+                    Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $vmItem.vm
+                    [void] $detailedVMList.add($obj)
+                }
+                return $detailedVMList
+            }
+            return $vmList
+        }
     }
     End
     {
@@ -300,30 +601,30 @@ function Get-VMWareRAVM {
 
 #region Get-VMWareRAVMID
 function Get-VMWareRAVMID {
-<#
-    .Synopsis
-        Get vm ID for a specific vm from VMWare Rest API
-    
-    .DESCRIPTION
-        Get vm ID for a specific vm from VMWare Rest API
-    
-    .PARAMETER vCenter
-        FQDN of server to connect to
-
-    .PARAMETER sessionID
-        vmware-api-session-id from Connect-vmwwarerasession
-    
-    .PARAMETER vmID
-    
-    .EXAMPLE
+    <#
+        .Synopsis
+            Get vm ID for a specific vm from VMWare Rest API
         
+        .DESCRIPTION
+            Get vm ID for a specific vm from VMWare Rest API
         
-    .OUTPUTS
-        vmware ID, needed for other functions in this module
+        .PARAMETER vCenter
+            FQDN of server to connect to
 
-    .Notes
-        Author: Travis Sobeck
-#>    
+        .PARAMETER sessionID
+            vmware-api-session-id from Connect-vmwwarerasession
+        
+        .PARAMETER vmID
+        
+        .EXAMPLE
+            
+            
+        .OUTPUTS
+            vmware ID, needed for other functions in this module
+
+        .Notes
+            Author: Travis Sobeck
+    #>    
     [CmdletBinding()]
     Param
     (
