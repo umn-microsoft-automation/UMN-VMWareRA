@@ -1197,6 +1197,329 @@ function Set-VMWareRAVMTagAttachedToObject {
 }
 #endregion
 
+#region Get-VMWareRACluster
+function Get-VMWareRACluster {
+<#
+    .Synopsis
+        Get details about cluster by name or list of all clusters from the VMWare Rest API
+
+    .DESCRIPTION
+        Get details about cluster by name or list of all clusters from the VMWare Rest API
+
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+
+    .PARAMETER name
+        name of the cluster, case sensitivity required 
+
+    .OUTPUTS
+        Cluster objects, which includes the name, ID, and HA/DRS enablement settings.
+    .Notes
+        Author: Aaron Smith
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [string]$name
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        ## Construct url
+        $url = "https://$vCenter/rest/vcenter/cluster"
+
+        if ($name)
+        {
+            $url += "?filter.names=$name"
+        }
+
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+        return(($return.Content | ConvertFrom-Json).value)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAHost
+function Get-VMWareRAHost {
+<#
+    .Synopsis
+        Get details about host by name or list of all hosts from the VMWare Rest API
+
+    .DESCRIPTION
+        Get details about host by name or list of all hosts from the VMWare Rest API
+
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+
+    .PARAMETER name
+        name of the host, case sensitivity required
+
+    .PARAMETER hostID
+        ID of the host
+
+    .PARAMETER cluster
+        name of the cluster to obtain host list from, case sensitivity required
+
+    .PARAMETER clusterID
+        ID of the cluster to obtain host list from. Overrides cluster parameter if also specified.
+
+    .OUTPUTS   
+        Host objects, which includes the name, ID, connection and power status
+
+    .Notes
+        Author: Aaron Smith
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [string]$name,
+
+        [string]$hostID,
+
+        [string]$cluster,
+
+        [string]$clusterID
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        if ($cluster)
+        {
+            $clusterID = (Get-VMWareRACluster -vCenter $vCenter -sessionID $sessionID -name $cluster).cluster
+
+            if (!$clusterID)
+            {
+                throw "Cluster $cluster not found by name"
+            }
+        }
+
+        ## Construct url
+        $url = "https://$vCenter/rest/vcenter/host"
+
+        [System.Collections.ArrayList] $urlFilters = New-Object System.Collections.ArrayList
+
+        if ($name)
+        {
+            [void] $urlFilters.add("filter.names=$name")
+        }
+
+        if ($hostID)
+        {
+            [void] $urlFilters.add("filter.hosts=$hostID")
+        }
+
+        if ($clusterID)
+        {
+            [void] $urlFilters.add("filter.clusters=$clusterID")
+        }
+
+        if ($urlFilters.Count -gt 0)
+        {
+            $url += "?"
+
+            foreach ($urlFilterItem in $urlFilters)
+            {
+                $url += $urlFilterItem + "&"
+            }
+        }
+
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+        return(($return.Content | ConvertFrom-Json).value)
+    }
+    End
+    {
+    }
+}
+#endregion
+
+#region Get-VMWareRAVMByName
+function Get-VMWareRAVMByName {
+<#
+    .Synopsis
+        Get VM objects by name from the VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
+
+    .DESCRIPTION
+        Get details about vm or a list of vms from VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
+        Able to return more than 1000 objects by working around the current limitation of the REST APIs.
+
+    .PARAMETER vCenter
+        FQDN of server to connect to
+
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
+
+    .PARAMETER name
+        name of the VM, case sensitivity not required. Supports wildcard character *.
+
+    .PARAMETER host
+        name of host to return list of VMs from, case sensitivity required
+
+    .PARAMETER hostID
+        ID of host to return list of VMs from. Overrides host parameter if also specified.
+
+    .PARAMETER cluster
+        Name of cluster to return list of VMs from (able to return more then 1000 VMs), case sensitivity required.
+
+    .PARAMETER clusterID
+        ID of cluster to return list of VMs from (able to return more then 1000 VMs.) Overrides cluster parameter if specified.
+
+    .OUTPUTS
+        List of VM objects based on parameters specified.
+
+    .Notes
+        Author: Aaron Smith
+#>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [string]$name,
+
+        [string]$host,
+
+        [string]$hostID,
+
+        [string]$cluster,
+
+        [string]$clusterID
+    )
+
+    Begin
+    {
+    }
+    Process
+    {
+        if ($cluster)
+        {
+            $clusterID = (Get-VMWareRACluster -vCenter $vCenter -sessionID $sessionID -name $cluster).cluster
+
+            if (!$clusterID)
+            {
+                throw "Cluster $cluster not found by name"
+            }
+        }
+
+        if ($host)
+        {
+            $hostID = (Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID -name $host).host
+
+            if (!$hostID)
+            {
+                throw "VMHost $host not found by name"
+            }
+        }
+
+        ## List of VMs compiled from queries for return
+        [System.Collections.ArrayList] $vmList = New-Object System.Collections.ArrayList
+
+        ## Construct url
+        $url = "https://$vCenter/rest/vcenter/vm"
+
+        [System.Collections.ArrayList] $urlFilters = New-Object System.Collections.ArrayList
+
+        if ($hostID)
+        {
+            [void] $urlFilters.add("filter.hosts=$hostID")
+        }
+
+        if ($urlFilters.Count -gt 0)
+        {
+            $url += "?"
+
+            foreach ($urlFilterItem in $urlFilters)
+            {
+                $url += $urlFilterItem + "&"
+            }
+
+            $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+
+            foreach ($returnItem in (($return.Content | ConvertFrom-Json).value))
+            {
+                [void] $vmList.Add($returnItem)
+            }
+        }
+        else
+        {
+            [Array] $hostList = $null;
+
+            if ($clusterID)
+            {
+                $hostList = Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID -clusterID $clusterID
+            }
+            else
+            {
+                $hostList = Get-VMWareRAHost -vCenter $vCenter -sessionID $sessionID
+            }
+
+            foreach ($hostItem in $hostList)
+            {
+                $hostID = $hostItem.host
+                $url = "https://$vCenter/rest/vcenter/vm?filter.hosts=$hostID"
+
+                $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+                
+                foreach ($returnItem in (($return.Content | ConvertFrom-Json).value))
+                {
+                    [void] $vmList.Add($returnItem)
+                }
+            }
+        }
+
+        if ($name)
+        {
+            [System.Collections.ArrayList] $filteredVMList = New-Object System.Collections.ArrayList
+
+            foreach ($vmItem in $vmList)
+            {
+                if ($vmItem.name -like "$name")
+                {
+                    [void] $filteredVMList.add($vmItem)
+                }
+            }
+
+            return $filteredVMList.ToArray();
+        }
+
+        return $vmList.ToArray();
+    }
+    End
+    {
+    }
+}
+#endregion
+
 #region Test-VMWareRASession
 function Test-VMWareRASession {
 <#
