@@ -423,7 +423,7 @@ function Get-VMWareRAVM {
         .PARAMETER vmID
             ID of vm, or leave this and vmID blank to get a full list
 
-        .PARAMETER host
+        .PARAMETER hostName
             name of host to return list of VMs from, case sensitivity required
 
         .PARAMETER hostID
