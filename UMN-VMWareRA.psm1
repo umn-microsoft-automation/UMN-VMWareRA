@@ -400,50 +400,50 @@ function Get-VMWareRAOpen {
 
 #region Get-VMWareRAVM
 function Get-VMWareRAVM {
-    <#
-        .Synopsis
-            Get VM objects by name from the VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
+<#
+    .Synopsis
+        Get VM objects by name from the VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
 
-        .DESCRIPTION
-            Get details about vm or a list of vms from VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
-            Able to return more than 1000 objects by working around the current limitation of the REST APIs.
+    .DESCRIPTION
+        Get details about vm or a list of vms from VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
+        Able to return more than 1000 objects by working around the current limitation of the REST APIs.
 
-        .PARAMETER vCenter
-            FQDN of server to connect to
+    .PARAMETER vCenter
+        FQDN of server to connect to
 
-        .PARAMETER sessionID
-            vmware-api-session-id from Connect-vmwwarerasession
+    .PARAMETER sessionID
+        vmware-api-session-id from Connect-vmwwarerasession
 
-        .PARAMETER name
-            name of the VM, case sensitivity not required. Supports wildcard character *.
+    .PARAMETER name
+        name of the VM, case sensitivity not required. Supports wildcard character *.
 
-        .PARAMETER computer
-            Alias to name
+    .PARAMETER computer
+        Alias to name
 
-        .PARAMETER vmID
-            ID of vm, or leave this and vmID blank to get a full list
+    .PARAMETER vmID
+        ID of vm, or leave this and vmID blank to get a full list
 
-        .PARAMETER hostName
-            name of host to return list of VMs from, case sensitivity required
+    .PARAMETER hostName
+        name of host to return list of VMs from, case sensitivity required
 
-        .PARAMETER hostID
-            ID of host to return list of VMs from. Overrides host parameter if also specified.
+    .PARAMETER hostID
+        ID of host to return list of VMs from. Overrides host parameter if also specified.
 
-        .PARAMETER cluster
-            Name of cluster to return list of VMs from (able to return more then 1000 VMs), case sensitivity required.
+    .PARAMETER cluster
+        Name of cluster to return list of VMs from (able to return more then 1000 VMs), case sensitivity required.
 
-        .PARAMETER clusterID
-            ID of cluster to return list of VMs from (able to return more then 1000 VMs.) Overrides cluster parameter if specified.
+    .PARAMETER clusterID
+        ID of cluster to return list of VMs from (able to return more then 1000 VMs.) Overrides cluster parameter if specified.
 
-        .PARAMETER detailed
-            Add this switch to output detailed contents of the VM
+    .PARAMETER detailed
+        Add this switch to output detailed contents of the VM
 
-        .OUTPUTS
-            List of VM objects based on parameters specified.
+    .OUTPUTS
+        List of VM objects based on parameters specified.
 
-        .Notes
-            Author: Aaron Smith, Travis Sobeck
-    #>
+    .Notes
+        Author: Aaron Smith, Travis Sobeck
+#>
     [CmdletBinding()]
     Param
     (
@@ -643,11 +643,12 @@ function Get-VMWareRAVMID {
     }
     Process
     {
-        ## Construct url
-        $url = "https://$vCenter/rest/vcenter/vm?filter.names=$computer"
-        $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing).Content | ConvertFrom-Json).value.vm
-        if($return.count -gt 1){Throw "Retuned more than one result $return"}
-        return $return
+        
+        if(($vmID = (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer -detailed).id))
+        {
+            return $vmID
+        }
+        else{Throw "Unable to find VM"}
     }
     End
     {
