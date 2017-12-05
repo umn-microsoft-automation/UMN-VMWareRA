@@ -650,7 +650,7 @@ function Get-VMWareRAVMID {
         {
             return $vmID
         }
-        else{Throw "Unable to find VM"}
+        else{return $null}
     }
     End
     {
