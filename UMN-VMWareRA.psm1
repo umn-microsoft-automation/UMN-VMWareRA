@@ -483,7 +483,7 @@ function Get-VMWareRAVM {
                 $url = "https://$vCenter/rest/vcenter/vm/$tempvmID"
                 $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing).Content | ConvertFrom-Json).value
                 $obj = $return
-                Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $return.name
+                Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $tempvmID
                 return $obj        
             }
         }
@@ -491,7 +491,7 @@ function Get-VMWareRAVM {
         {
             $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing).Content | ConvertFrom-Json).value
             $obj = $return
-            Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $return.name
+            Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $vmID
             return $obj
         }
         Write-Verbose "No exact match, checking for other matches"
