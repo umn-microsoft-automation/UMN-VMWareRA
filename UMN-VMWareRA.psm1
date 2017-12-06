@@ -1415,7 +1415,7 @@ function Set-VMWareRAVMpower {
     Process
     {
         $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
-        "$vmID"
+        Write-Verbose "VM ID: $vmID"
         ## Construct url
         $url = "https://$vCenter/rest/vcenter/vm/$vmID/power/$state"
         $return = Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
