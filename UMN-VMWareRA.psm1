@@ -481,15 +481,18 @@ function Get-VMWareRAVM {
             if($tempvmID.count -eq 1)
             {
                 $url = "https://$vCenter/rest/vcenter/vm/$tempvmID"
-                $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
-                return(($return.Content | ConvertFrom-Json).value)        
+                $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing).Content | ConvertFrom-Json).value
+                $obj = $return
+                Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $return.name
+                return $obj        
             }
         }
         if($vmID)
         {
-            $url = "https://$vCenter/rest/vcenter/vm/$vmID"
-            $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
-            return(($return.Content | ConvertFrom-Json).value)
+            $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing).Content | ConvertFrom-Json).value
+            $obj = $return
+            Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $return.name
+            return $obj
         }
         Write-Verbose "No exact match, checking for other matches"
         if ($cluster)
@@ -1412,6 +1415,7 @@ function Set-VMWareRAVMpower {
     Process
     {
         $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
+        "$vmID"
         ## Construct url
         $url = "https://$vCenter/rest/vcenter/vm/$vmID/power/$state"
         $return = Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
