@@ -1215,8 +1215,11 @@ function New-VMWareRAVM {
         $diskCount = 1
         foreach($diskSize in $diskSizeGB)
         {
-            $null = $spec["disks"].add(@{"new_vmdk"= @{"capacity"= ([math]::pow( 1024, 3 ) * $diskSize).ToString();"name"= "disk-$diskCount"};"type"= "SCSI"})
-            $diskCount++
+            if ($diskSize -ne 0)
+            {
+                $null = $spec["disks"].add(@{"new_vmdk"= @{"capacity"= ([math]::pow( 1024, 3 ) * $diskSize).ToString();"name"= "disk-$diskCount"};"type"= "SCSI"})
+                $diskCount++
+            }
         }
         if ($secondDiskSizeGB){$null = $spec["disks"].add(@{"new_vmdk"= @{"capacity"= ([math]::pow( 1024, 3 ) * $secondDiskSizeGB).ToString();"name"= "disk-$diskCount"};"type"= "SCSI"})}
         # construct json
