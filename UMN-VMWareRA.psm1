@@ -1126,28 +1126,22 @@ function Get-VMWareRAVMTagAttachList {
 
 #region New-VMWareRAVM
 function New-VMWareRAVM {
-<#
-    .Synopsis
-        Build new VM via VMWare Rest API
-    
-    .DESCRIPTION
-        Build new VM via VMWare Rest API
-    
-    .PARAMETER vCenter
-        FQDN of server to connect to
+    <#
+        .Synopsis
+            Build new VM via VMWare Rest API
+        
+        .DESCRIPTION
+            Build new VM via VMWare Rest API
+        
+        .PARAMETER vCenter
+            FQDN of server to connect to
 
-    .PARAMETER sessionID
-        vmware-api-session-id from Connect-vmwwarerasession
-    
-    .EXAMPLE
-        
-        
-    .OUTPUTS
-        
+        .PARAMETER sessionID
+            vmware-api-session-id from Connect-vmwwarerasession          
 
-    .Notes
-        Author: Travis Sobeck
-#>
+        .Notes
+            Author: Travis Sobeck
+    #>
     [CmdletBinding()]
     Param
     (
@@ -1169,7 +1163,7 @@ function New-VMWareRAVM {
         #[string]$notes,
 
         [Parameter(Mandatory)]
-        [int]$diskSizeGB,
+        [int[]]$diskSizeGB,
 
         [int]$secondDiskSizeGB,
 
@@ -1217,11 +1211,17 @@ function New-VMWareRAVM {
           "cpu"= @{"count"= $NumCpu;"hot_add_enabled"= $true;"hot_remove_enabled"= $true;"cores_per_socket"= $corePerSocket};          
         } # close 'spec'
         if ($isoPath){$spec["cdroms"]= [array]@(@{"backing"= @{"iso_file"= $isoPath;"type"= "ISO_FILE"};"start_connected"= $true;"allow_guest_control"= $true;"type"= "SATA"});}
-        $spec["disks"] = [System.Collections.ArrayList]@(@{"new_vmdk"= @{"capacity"= ([math]::pow( 1024, 3 ) * $diskSizeGB).ToString();"name"= "disk1"};"type"= "SCSI"})
-        if ($secondDiskSizeGB){$null = $spec["disks"].add(@{"new_vmdk"= @{"capacity"= ([math]::pow( 1024, 3 ) * $secondDiskSizeGB).ToString();"name"= "disk2"};"type"= "SCSI"})}
-
+        $spec["disks"] = [System.Collections.ArrayList]@()
+        $diskCount = 1
+        foreach($diskSize in $diskSizeGB)
+        {
+            $null = $spec["disks"].add(@{"new_vmdk"= @{"capacity"= ([math]::pow( 1024, 3 ) * $diskSize).ToString();"name"= "disk-$diskCount"};"type"= "SCSI"})
+            $diskCount++
+        }
+        if ($secondDiskSizeGB){$null = $spec["disks"].add(@{"new_vmdk"= @{"capacity"= ([math]::pow( 1024, 3 ) * $secondDiskSizeGB).ToString();"name"= "disk-$diskCount"};"type"= "SCSI"})}
         # construct json
         $json = @{'spec' = $spec} | ConvertTo-Json -Depth 5
+        Write-Verbose $json
         return (((Invoke-WebRequest -Uri $url -Method Post -Headers @{'vmware-api-session-id'=$sessionID;'Accept' = 'application/json'} -ContentType 'application/json' -Body $json -UseBasicParsing).Content | convertfrom-json).value)
     }
     End
