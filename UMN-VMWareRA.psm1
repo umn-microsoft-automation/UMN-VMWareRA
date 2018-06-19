@@ -489,6 +489,7 @@ function Get-VMWareRAVM {
         }
         if($vmID)
         {
+            $url = "https://$vCenter/rest/vcenter/vm/$vmID"
             $return = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing).Content | ConvertFrom-Json).value
             $obj = $return
             Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $vmID
