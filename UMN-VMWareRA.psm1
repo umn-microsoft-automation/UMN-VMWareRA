@@ -175,6 +175,106 @@ function Get-VMWareRACluster {
 }
 #endregion
 
+#region Get-VMWareRADatastore
+function Get-VMWareRADatastore {
+    <#
+        .Synopsis
+            Get Datastore objects by name,ID,or filter from the VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
+    
+        .DESCRIPTION
+            et Datastore objects by name,ID,or filter from the VMWare Rest API.  Supports wildcards and handles case sensitivity issues.
+            Able to return more than 1000 objects by working around the current limitation of the REST APIs.
+    
+        .PARAMETER vCenter
+            FQDN of server to connect to
+    
+        .PARAMETER sessionID
+            vmware-api-session-id from Connect-vmwwarerasession
+    
+        .PARAMETER name
+            name of the datastore, case sensitivity not required. Supports wildcard character *.
+    
+        .PARAMETER datastoreID
+            ID of vm, or leave this and vmID blank to get a full list
+    
+        .PARAMETER folder
+            Array[string] of folders to filter on
+    
+        .PARAMETER datacenter
+            Datacenters that must contain the datastore     
+        
+        .PARAMETER type
+            One of ['VMFS', 'NFS', 'NFS41', 'CIFS', 'VSAN', 'VFFS', 'VVOL']
+
+        .OUTPUTS
+            List of VM objects based on parameters specified.
+    
+        .Notes
+            Author: Aaron Smith, Travis Sobeck
+    #>
+    [CmdletBinding()]
+    Param
+    (
+        [Parameter(Mandatory)]
+        [string]$vCenter,
+        
+        [Parameter(Mandatory)]
+        [string]$sessionID,
+
+        [string]$name,
+
+        [string]$datastoreID,
+
+        [string]$folder,
+
+        [string]$datacenter,
+
+        [Parameter(Mandatory=$false)]
+        [ValidateSet('VMFS', 'NFS', 'NFS41', 'CIFS', 'VSAN', 'VFFS', 'VVOL')]
+        [string]$type
+    )
+
+    Begin{}
+    Process
+    {
+        $first = $true
+        ## Construct url
+        $url = "https://$vCenter/rest/vcenter/datastore"
+        if ($datastoreID)
+        {
+            $return = Invoke-WebRequest -Uri "$url/$datastoreID" -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+            Write-Verbose -Message $return
+            return ((($return).Content | ConvertFrom-Json).value)
+        }
+        if($name)
+        {
+           if($first){$url += "?filter.names=$name";$first=$false}
+           else{$url += "&filter.names=$name"} 
+        }
+        if($folder)
+        {
+            if($first){$url += "?filter.folders=$folder";$first=$false}
+            else{$url += "&filter.folders=$folder"}  
+        }
+        if($datacenter)
+        {
+            if($first){$url += "?filter.datacenters=$datacenter";$first=$false}
+            else{$url += "&filter.datacenters=$datacenter"}  
+        }
+        if($type)
+        {
+            if($first){$url += "?filter.types=$folder";$first=$false}
+            else{$url += "&filter.types=$type"}  
+        }
+
+        $return = Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing
+        Write-Verbose -Message $return
+        return ((($return).Content | ConvertFrom-Json).value)
+    }
+    End{}
+}
+#endregion
+
 #region Get-VMWareRAHost
 function Get-VMWareRAHost {
     <#

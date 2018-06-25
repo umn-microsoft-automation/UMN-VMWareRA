@@ -11,6 +11,9 @@ diskSizeGB will take an array of Integers to build multiple disks.  You can stil
 
 
 # Releases
+## 1.2.3 -- 6/25/18
+Add function Get-VMWareRADatastore
+
 ## 1.2.2 -- 6/19/18
 BugFix Get-VMWareRAVM using -vmid switch was throwing error, failed to define URL
 
