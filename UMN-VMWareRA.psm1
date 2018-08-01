@@ -750,7 +750,7 @@ function Get-VMWareRAVMID {
     Process
     {
         
-        if(($vmID = (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer).vm))
+        if(($vmID = (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer).id))
         {
             return $vmID
         }
