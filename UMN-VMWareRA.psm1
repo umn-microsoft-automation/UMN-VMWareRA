@@ -677,7 +677,7 @@ function Get-VMWareRAVM {
                 {                    
                     if ($detailed){
                         $obj = Get-VMWareRAVM -vCenter $vcenter -sessionID $sessionID -vmID $vmItem.vm
-                        Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $vmItem.vm
+                        # Add-Member -InputObject $obj -MemberType NoteProperty -Name 'id' -Value $vmItem.vm
                         [void] $detailedVMList.add($obj)
                     }
                     else{[void] $detailedVMList.add($vmItem)}
@@ -750,7 +750,7 @@ function Get-VMWareRAVMID {
     Process
     {
         
-        if(($vmID = (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer).vm))
+        if(($vmID = (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer -detailed).id))
         {
             return $vmID
         }
@@ -1381,9 +1381,10 @@ function Remove-VMWareISO {
     {
         Try{
             # Get VM ID, and device id of CD-ROM
-            $vmID = Get-VMWareRAVMID -vCenter $vCenter -sessionID $sessionID -computer $computer
-            $cdRomID =  (Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer).cdroms.key
-        
+            $vm = Get-VMWareRAVM -vCenter $vCenter -sessionID $sessionID -computer $computer -detailed
+            $cdRomID =  $vm.cdroms.key
+            $vmID = $vm.id
+            
             ## Construct url
             $url = "https://$vCenter/rest/vcenter/vm/$vmID/hardware/cdrom/$cdRomID"
 
