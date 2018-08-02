@@ -11,6 +11,9 @@ diskSizeGB will take an array of Integers to build multiple disks.  You can stil
 
 
 # Releases
+## 1.2.5 -- 8/2/18
+Update function Get-VMWareVM -detailed switch fixed
+
 ## 1.2.4 -- 7/31/18
 Update function Get-VMWareRAVMID
 
