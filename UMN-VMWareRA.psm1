@@ -1288,7 +1288,9 @@ function New-VMWareRAVM {
 
         [string]$hardwareVersion = 'VMX_11',
 
-        [string]$guestOS = 'WINDOWS_9_SERVER_64'
+        [string]$guestOS = 'WINDOWS_9_SERVER_64',
+
+        [string]$nicType = 'VMXNET3'
     )
 
     Begin
@@ -1307,7 +1309,7 @@ function New-VMWareRAVM {
           'boot'= @{'type'= $bootSource};#'efi_legacy_boot'= $true;'delay'= 0;
           'hardware_version'= $hardwareVersion;
           'guest_OS'= $guestOS;          
-          "nics"= @(@{"backing"= @{"type"= "DISTRIBUTED_PORTGROUP";"network"= $network};"allow_guest_control"= $true;"mac_type"= "GENERATED";"start_connected"= $true;"type"= "VMXNET3"});
+          "nics"= @(@{"backing"= @{"type"= "DISTRIBUTED_PORTGROUP";"network"= $network};"allow_guest_control"= $true;"mac_type"= "GENERATED";"start_connected"= $true;"type"= $nicType});
           "memory"= @{"hot_add_enabled"= $true;"size_MiB"= (1024 * $memoryGB)};
           "cpu"= @{"count"= $NumCpu;"hot_add_enabled"= $true;"hot_remove_enabled"= $true;"cores_per_socket"= $corePerSocket};          
         } # close 'spec'

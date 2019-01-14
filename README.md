@@ -9,6 +9,9 @@ This function is used to grab the mac address of a sincle connected nic.  Look a
 New-VMWareRAVM
 diskSizeGB will take an array of Integers to build multiple disks.  You can still use secondDiskSizeGB and it will work as expected
 
+# Releases
+## 1.2.6 -- 1/14/19
+Update function New-VMWareRAVM to support NicType as an option.
 
 # Releases
 ## 1.2.5 -- 8/2/18
