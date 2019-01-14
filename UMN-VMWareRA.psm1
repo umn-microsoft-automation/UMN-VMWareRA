@@ -1290,7 +1290,7 @@ function New-VMWareRAVM {
 
         [string]$guestOS = 'WINDOWS_9_SERVER_64',
 
-        [string]$nicType = 'E1000E'
+        [string]$nicType = 'VMXNET3'
     )
 
     Begin
