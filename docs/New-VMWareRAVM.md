@@ -1,7 +1,7 @@
 ---
 external help file: UMN-VMWareRA-help.xml
 Module Name: UMN-VMWareRA
-online version: 
+online version:
 schema: 2.0.0
 ---
 
@@ -16,7 +16,8 @@ Build new VM via VMWare Rest API
 New-VMWareRAVM [-vCenter] <String> [-sessionID] <String> [-computer] <String> [[-memoryGB] <Int32>]
  [[-NumCpu] <Int32>] [[-corePerSocket] <Int32>] [-diskSizeGB] <Int32[]> [[-secondDiskSizeGB] <Int32>]
  [-network] <String> [[-isoPath] <String>] [-folder] <String> [-cluster] <String> [-datastore] <String>
- [[-bootSource] <String>] [[-hardwareVersion] <String>] [[-guestOS] <String>]
+ [[-bootSource] <String>] [[-hardwareVersion] <String>] [[-guestOS] <String>] [[-nicType] <String>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -39,7 +40,7 @@ FQDN of server to connect to
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 1
@@ -54,7 +55,7 @@ vmware-api-session-id from Connect-vmwwarerasession
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 2
@@ -69,7 +70,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 3
@@ -84,7 +85,7 @@ Accept wildcard characters: False
 ```yaml
 Type: Int32
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 4
@@ -99,7 +100,7 @@ Accept wildcard characters: False
 ```yaml
 Type: Int32
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 5
@@ -114,7 +115,7 @@ Accept wildcard characters: False
 ```yaml
 Type: Int32
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 6
@@ -129,7 +130,7 @@ Accept wildcard characters: False
 ```yaml
 Type: Int32[]
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 7
@@ -144,7 +145,7 @@ Accept wildcard characters: False
 ```yaml
 Type: Int32
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 8
@@ -159,7 +160,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 9
@@ -174,7 +175,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 10
@@ -189,7 +190,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 11
@@ -204,7 +205,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 12
@@ -219,7 +220,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 13
@@ -234,7 +235,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 14
@@ -249,7 +250,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 15
@@ -264,7 +265,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 16
@@ -272,6 +273,24 @@ Default value: WINDOWS_9_SERVER_64
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+
+### -nicType
+{{Fill nicType Description}}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 17
+Default value: VMXNET3
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
@@ -281,4 +300,3 @@ Accept wildcard characters: False
 Author: Travis Sobeck
 
 ## RELATED LINKS
-

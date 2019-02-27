@@ -1,7 +1,7 @@
 ---
 external help file: UMN-VMWareRA-help.xml
 Module Name: UMN-VMWareRA
-online version: 
+online version:
 schema: 2.0.0
 ---
 
@@ -13,7 +13,7 @@ Get-vmware Tag by ID via Rest API
 ## SYNTAX
 
 ```
-Get-VMWareRATagByID [-vCenter] <String> [-sessionID] <String> [-tagID] <String>
+Get-VMWareRATagByID [-vCenter] <String> [-sessionID] <String> [-tagID] <String> [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -21,7 +21,7 @@ Get-vmware Tag by ID via Rest API
 
 ## EXAMPLES
 
-### -------------------------- EXAMPLE 1 --------------------------
+### EXAMPLE 1
 ```
 
 ```
@@ -34,7 +34,7 @@ FQDN of server to connect to
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 1
@@ -49,7 +49,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 2
@@ -64,7 +64,7 @@ Accept wildcard characters: False
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 3
@@ -72,6 +72,9 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
@@ -81,4 +84,3 @@ Accept wildcard characters: False
 Author: Travis Sobeck
 
 ## RELATED LINKS
-

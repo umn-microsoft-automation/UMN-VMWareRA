@@ -1,7 +1,7 @@
 ---
 external help file: UMN-VMWareRA-help.xml
 Module Name: UMN-VMWareRA
-online version: 
+online version:
 schema: 2.0.0
 ---
 
@@ -13,7 +13,7 @@ Remove vm from VMWare Rest API
 ## SYNTAX
 
 ```
-Remove-VMWareRAVM [-vCenter] <String> [-sessionID] <String> [-computer] <String>
+Remove-VMWareRAVM [-vCenter] <String> [-sessionID] <String> [-computer] <String> [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -21,7 +21,7 @@ Remove vm from VMWare Rest API
 
 ## EXAMPLES
 
-### -------------------------- EXAMPLE 1 --------------------------
+### EXAMPLE 1
 ```
 
 ```
@@ -34,7 +34,7 @@ FQDN of server to connect to
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 1
@@ -49,7 +49,7 @@ vmware-api-session-id from Connect-vmwwarerasession
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 2
@@ -64,7 +64,7 @@ name of vm
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 3
@@ -72,6 +72,9 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
@@ -83,4 +86,3 @@ Accept wildcard characters: False
 Author: Travis Sobeck
 
 ## RELATED LINKS
-
