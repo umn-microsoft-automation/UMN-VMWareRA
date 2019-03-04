@@ -1,7 +1,7 @@
 ---
 external help file: UMN-VMWareRA-help.xml
 Module Name: UMN-VMWareRA
-online version: 
+online version:
 schema: 2.0.0
 ---
 
@@ -14,7 +14,7 @@ Get details about host by name or list of all hosts from the VMWare Rest API
 
 ```
 Get-VMWareRAHost [-vCenter] <String> [-sessionID] <String> [[-name] <String>] [[-hostID] <String>]
- [[-cluster] <String>] [[-clusterID] <String>]
+ [[-cluster] <String>] [[-clusterID] <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -37,7 +37,7 @@ FQDN of server to connect to
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 1
@@ -52,7 +52,7 @@ vmware-api-session-id from Connect-vmwwarerasession
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: True
 Position: 2
@@ -67,7 +67,7 @@ name of the host, case sensitivity required
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 3
@@ -82,7 +82,7 @@ ID of the host
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 4
@@ -97,7 +97,7 @@ name of the cluster to obtain host list from, case sensitivity required
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 5
@@ -113,7 +113,7 @@ Overrides cluster parameter if also specified.
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: 
+Aliases:
 
 Required: False
 Position: 6
@@ -121,6 +121,9 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+
+### CommonParameters
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
@@ -132,4 +135,3 @@ Accept wildcard characters: False
 Author: Aaron Smith
 
 ## RELATED LINKS
-

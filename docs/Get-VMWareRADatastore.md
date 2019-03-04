@@ -5,29 +5,28 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-VMWareRAVM
+# Get-VMWareRADatastore
 
 ## SYNOPSIS
-Get VM objects by name from the VMWare Rest API. 
+Get Datastore objects by name,ID,or filter from the VMWare Rest API. 
 Supports wildcards and handles case sensitivity issues.
 
 ## SYNTAX
 
 ```
-Get-VMWareRAVM [-vCenter] <String> [-sessionID] <String> [[-name] <String>] [[-vmID] <String>]
- [[-hostName] <String>] [[-hostID] <String>] [[-cluster] <String>] [[-clusterID] <String>] [-detailed]
- [<CommonParameters>]
+Get-VMWareRADatastore [-vCenter] <String> [-sessionID] <String> [[-name] <String>] [[-datastoreID] <String>]
+ [[-folder] <String>] [[-datacenter] <String>] [[-type] <String>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Get details about vm or a list of vms from VMWare Rest API. 
+et Datastore objects by name,ID,or filter from the VMWare Rest API. 
 Supports wildcards and handles case sensitivity issues.
 Able to return more than 1000 objects by working around the current limitation of the REST APIs.
 
 ## EXAMPLES
 
 ### Example 1
-```
+```powershell
 PS C:\> {{ Add example code here }}
 ```
 
@@ -66,13 +65,13 @@ Accept wildcard characters: False
 ```
 
 ### -name
-name of the VM, case sensitivity not required.
+name of the datastore, case sensitivity not required.
 Supports wildcard character *.
 
 ```yaml
 Type: String
 Parameter Sets: (All)
-Aliases: computer
+Aliases:
 
 Required: False
 Position: 3
@@ -81,7 +80,7 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -vmID
+### -datastoreID
 ID of vm, or leave this and vmID blank to get a full list
 
 ```yaml
@@ -96,8 +95,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -hostName
-name of host to return list of VMs from, case sensitivity required
+### -folder
+Array\[string\] of folders to filter on
 
 ```yaml
 Type: String
@@ -111,9 +110,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -hostID
-ID of host to return list of VMs from.
-Overrides host parameter if also specified.
+### -datacenter
+Datacenters that must contain the datastore
 
 ```yaml
 Type: String
@@ -127,8 +125,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -cluster
-Name of cluster to return list of VMs from (able to return more then 1000 VMs), case sensitivity required.
+### -type
+One of \['VMFS', 'NFS', 'NFS41', 'CIFS', 'VSAN', 'VFFS', 'VVOL'\]
 
 ```yaml
 Type: String
@@ -142,45 +140,15 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -clusterID
-ID of cluster to return list of VMs from (able to return more then 1000 VMs.) Overrides cluster parameter if specified.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 8
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -detailed
-Add this switch to output detailed contents of the VM
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
 ## OUTPUTS
 
 ### List of VM objects based on parameters specified.
-
 ## NOTES
 Author: Aaron Smith, Travis Sobeck
 

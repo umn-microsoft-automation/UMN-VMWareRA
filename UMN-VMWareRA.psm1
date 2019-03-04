@@ -576,7 +576,7 @@ function Get-VMWareRAVM {
     {
         if($name)
         {
-            $url = "https://$vCenter/rest/vcenter/vm?filter.names=$computer"
+            $url = "https://$vCenter/rest/vcenter/vm?filter.names=$name"
             $tempvmID = ((Invoke-WebRequest -Uri $url -Method Get -Headers @{'vmware-api-session-id'=$sessionID} -ContentType 'application/json' -UseBasicParsing).Content | ConvertFrom-Json).value.vm
             if($tempvmID.count -eq 1)
             {
