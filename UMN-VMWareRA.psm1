@@ -1291,6 +1291,8 @@ function New-VMWareRAVM {
         [string]$guestOS = 'WINDOWS_9_SERVER_64',
 
         [string]$nicType = 'VMXNET3'
+
+        [string]$scsiBusType = 'LSILOGIC'
     )
 
     Begin
@@ -1311,7 +1313,8 @@ function New-VMWareRAVM {
           'guest_OS'= $guestOS;          
           "nics"= @(@{"backing"= @{"type"= "DISTRIBUTED_PORTGROUP";"network"= $network};"allow_guest_control"= $true;"mac_type"= "GENERATED";"start_connected"= $true;"type"= $nicType});
           "memory"= @{"hot_add_enabled"= $true;"size_MiB"= (1024 * $memoryGB)};
-          "cpu"= @{"count"= $NumCpu;"hot_add_enabled"= $true;"hot_remove_enabled"= $true;"cores_per_socket"= $corePerSocket};          
+          "cpu"= @{"count"= $NumCpu;"hot_add_enabled"= $true;"hot_remove_enabled"= $true;"cores_per_socket"= $corePerSocket};    
+          "scsi"= @{"bus"= "0";"pci_slot_number"= "0";"sharing"= "NONE";"type"= $scsiBusType};
         } # close 'spec'
         if ($isoPath){$spec["cdroms"]= [array]@(@{"backing"= @{"iso_file"= $isoPath;"type"= "ISO_FILE"};"start_connected"= $true;"allow_guest_control"= $true;"type"= "SATA"});}
         $spec["disks"] = [System.Collections.ArrayList]@()
