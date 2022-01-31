@@ -1318,7 +1318,7 @@ function New-VMWareRAVM {
         } # close 'spec'
         # Check for scsiBusType
         if ($scsiBusType){
-                      $spec["scsi"] = @{"bus"= "0";"pci_slot_number"= "0";"sharing"= "NONE";"type"= $scsiBusType};
+                      $spec["scsi_adapters"] = @(@{"bus"= "0";"pci_slot_number"= "0";"sharing"= "NONE";"type"= $scsiBusType});
         }
         if ($isoPath){$spec["cdroms"]= [array]@(@{"backing"= @{"iso_file"= $isoPath;"type"= "ISO_FILE"};"start_connected"= $true;"allow_guest_control"= $true;"type"= "SATA"});}
         $spec["disks"] = [System.Collections.ArrayList]@()
