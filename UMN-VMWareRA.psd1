@@ -28,7 +28,7 @@
 RootModule = 'UMN-VMWareRA.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.2.7'
+ModuleVersion = '1.2.8'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -43,7 +43,7 @@ Author = 'Travis Sobeck'
 CompanyName = 'University of Minnesota'
 
 # Copyright statement for this module
-Copyright = '(c) 2016 Regents of the University of Minnesota. All rights reserved.'
+Copyright = '(c) 2022 Regents of the University of Minnesota. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Powershell wrappers for interacting with VMWare 6.5+ Rest API'
@@ -123,7 +123,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-         ReleaseNotes = 'Fixed a bug with Get-VMWareRAVM when the $computer variable is set in your current environment'
+         ReleaseNotes = 'Added SCSI bus selection functionality to spec for new VM cmdlet'
 
     } # End of PSData hashtable
 
