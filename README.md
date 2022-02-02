@@ -12,6 +12,10 @@ diskSizeGB will take an array of Integers to build multiple disks.  You can stil
 
 ## Releases
 
+### 1.2.8 - 1/31/22
+
+Added -scsiBusType input to New-VMWareRAVM. Non-mandatory, and will use ESXi environment's preferred default if not specified. If specified, any virtual drives will be attached to this bus.
+
 ### 1.2.7 -- 2/26/19
 
 Fixed a bug with Get-VMWareRAVM when the $computer variable is set in your current environment
