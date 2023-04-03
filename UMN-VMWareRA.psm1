@@ -1283,7 +1283,10 @@ function New-VMWareRAVM {
 
         [Parameter(Mandatory)]
         [string]$datastore,
-
+         
+        [Parameter(Mandatory)]
+        [string]$cluster,
+        
         [string]$bootSource = 'CDROM',
 
         [string]$hardwareVersion = 'VMX_11',
@@ -1307,7 +1310,7 @@ function New-VMWareRAVM {
         $url = "https://$vCenter/rest/vcenter/vm"
 
         # construct hash table for JSON
-        $spec = @{'placement' = @{'cluster'= $cluster;'folder'= $folder;'datastore'= $datastore};
+        $spec = @{'placement' = @{'cluster'= $cluster;'folder'= $folder;'datastore'= $datastore;'resource_pool'= $ResourcePool};
           'name'= $computer;
           'boot'= @{'type'= $bootSource};#'efi_legacy_boot'= $true;'delay'= 0;
           'hardware_version'= $hardwareVersion;
