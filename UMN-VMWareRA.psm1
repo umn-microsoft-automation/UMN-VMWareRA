@@ -1272,7 +1272,7 @@ function New-VMWareRAVM {
         [string]$network,
 
         #[string[]]$tags, # api has not supported this yet
-
+        [Parameter]
         [string]$isoPath,
 
         [Parameter(Mandatory)]
@@ -1284,8 +1284,8 @@ function New-VMWareRAVM {
         [Parameter(Mandatory)]
         [string]$datastore,
          
-        [Parameter(Mandatory)]
-        [string]$cluster,
+        [Parameter]
+        [string]$ResourcePool,
         
         [string]$bootSource = 'CDROM',
 
