@@ -1272,7 +1272,7 @@ function New-VMWareRAVM {
         [string]$network,
 
         #[string[]]$tags, # api has not supported this yet
-       
+        [Parameter(Mandatory)]
         [string]$isoPath,
 
         [Parameter(Mandatory)]
