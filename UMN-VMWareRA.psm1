@@ -1310,7 +1310,7 @@ function New-VMWareRAVM {
         $url = "https://$vCenter/rest/vcenter/vm"
 
         # construct hash table for JSON
-        $spec = @{'placement' = @{'cluster'= $cluster;'folder'= $folder;'datastore'= $datastore;'resource_pool'= $ResourcePool};
+        $spec = @{'placement' = @{'cluster'= $cluster;'folder'= $folder;'datastore'= $datastore};
           'name'= $computer;
           'boot'= @{'type'= $bootSource};#'efi_legacy_boot'= $true;'delay'= 0;
           'hardware_version'= $hardwareVersion;
