@@ -1283,8 +1283,8 @@ function New-VMWareRAVM {
 
         [Parameter(Mandatory)]
         [string]$datastore,
-        
-        
+         
+        [Parameter]
         [string]$ResourcePool,
         
         [string]$bootSource = 'CDROM',
